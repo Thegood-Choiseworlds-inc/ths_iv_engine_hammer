@@ -13,6 +13,8 @@
 #include "mathlib/vector4d.h"
 #include "sse.h"
 
+#pragma warning( disable : 4101 )
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
