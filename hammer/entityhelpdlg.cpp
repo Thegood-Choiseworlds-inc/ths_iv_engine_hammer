@@ -1,0 +1,383 @@
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ====
+//
+// Purpose:
+//
+//=============================================================================
+
+#include "stdafx.h"
+#include "entityhelpdlg.h"
+#include "fgdlib/gamedata.h"
+#include "RichEditCtrlEx.h"
+
+// memdbgon must be the last include file in a .cpp file!!!
+#include <tier0/memdbgon.h>
+
+
+static CEntityHelpDlg *g_pHelpDlg = NULL;
+
+
+BEGIN_MESSAGE_MAP(CEntityHelpDlg, CDialog)
+	//{{AFX_MSG_MAP(CEntityHelpDlg)
+	ON_WM_DESTROY()
+	ON_WM_CLOSE()
+	ON_WM_GETMINMAXINFO()
+	//}}AFX_MSG_MAP
+END_MESSAGE_MAP()
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CEntityHelpDlg::ShowEntityHelpDialog(void)
+{
+	if (g_pHelpDlg == NULL)
+	{
+		g_pHelpDlg = new CEntityHelpDlg;
+		g_pHelpDlg->Create(IDD_ENTITY_HELP);
+	}
+
+	if (g_pHelpDlg != NULL)
+	{
+		g_pHelpDlg->ShowWindow(SW_SHOW);
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CEntityHelpDlg::SetEditGameClass(GDclass *pClass)
+{
+	if (g_pHelpDlg != NULL)
+	{
+		g_pHelpDlg->UpdateClass(pClass);
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor.
+//-----------------------------------------------------------------------------
+CEntityHelpDlg::CEntityHelpDlg(CWnd *pwndParent)
+	: CDialog(CEntityHelpDlg::IDD, pwndParent)
+{
+	m_pHelpText = NULL;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Destructor.
+//-----------------------------------------------------------------------------
+CEntityHelpDlg::~CEntityHelpDlg(void)
+{
+	g_pHelpDlg = NULL;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  : pDX -
+//-----------------------------------------------------------------------------
+void CEntityHelpDlg::DoDataExchange(CDataExchange *pDX)
+{
+	CDialog::DoDataExchange(pDX);
+
+	//{{AFX_DATA_MAP(CEntityHelpDlg)
+	//}}AFX_DATA_MAP
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  : pszText -
+// Output :
+//-----------------------------------------------------------------------------
+int CEntityHelpDlg::GetTextWidth(const char *pszText, CDC *pDC)
+{
+	if (pszText != NULL)
+	{
+		bool bRelease = false;
+
+		if (pDC == NULL)
+		{
+			bRelease = true;
+			pDC = m_pHelpText->GetDC();
+		}
+
+		CGdiObject *pOldFont = pDC->SelectStockObject(DEFAULT_GUI_FONT);
+		CSize Size = pDC->GetTabbedTextExtent(pszText, strlen(pszText), 0, NULL);
+		pDC->SelectObject(pOldFont);
+
+		if (bRelease)
+		{
+			m_pHelpText->ReleaseDC(pDC);
+		}
+
+		return(Size.cx);
+	}
+
+	return(0);
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  : pClass -
+// Output :
+//-----------------------------------------------------------------------------
+int CEntityHelpDlg::GetMaxVariableWidth(GDclass *pClass)
+{
+	CDC *pDC = m_pHelpText->GetDC();
+
+	int nWidthMax = 0;
+
+	int nCount = m_pClass->GetVariableCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		GDinputvariable *pVar = m_pClass->GetVariableAt(i);
+		int nWidth = GetTextWidth(pVar->GetName(), pDC);
+
+		if (nWidth > nWidthMax)
+		{
+			nWidthMax = nWidth;
+		}
+	}
+
+	m_pHelpText->ReleaseDC(pDC);
+
+	return(nWidthMax);
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CEntityHelpDlg::OnClose(void)
+{
+	DestroyWindow();
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Called when our window is being destroyed.
+//-----------------------------------------------------------------------------
+void CEntityHelpDlg::OnDestroy(void)
+{
+	delete this;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+BOOL CEntityHelpDlg::OnInitDialog(void)
+{
+	CDialog::OnInitDialog();
+	m_pHelpText = new CRichEditCtrlEx;
+	m_pHelpText->SubclassDlgItem(IDC_HELP_TEXT, this);
+	m_pHelpText->enable();
+	EnableDynamicLayout();
+	auto layout = GetDynamicLayout();
+	layout->Create( this );
+	layout->AddItem( m_pHelpText->GetSafeHwnd(), CMFCDynamicLayout::MoveNone(), CMFCDynamicLayout::SizeHorizontalAndVertical( 100, 100 ) );
+	return(TRUE);
+}
+
+void CEntityHelpDlg::OnGetMinMaxInfo( MINMAXINFO* lpMMI )
+{
+	lpMMI->ptMinTrackSize.x = 278;
+	lpMMI->ptMinTrackSize.y = 262;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  : pClass -
+//-----------------------------------------------------------------------------
+void CEntityHelpDlg::UpdateClass(GDclass *pClass)
+{
+	m_pClass = pClass;
+	UpdateHelp();
+	m_pHelpText->LineScroll(-64000, -64000);
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CEntityHelpDlg::UpdateHelp(void)
+{
+	if (m_pClass != NULL)
+	{
+		m_pHelpText->SetWindowText("");
+
+		CRTFBuilder b;
+
+		b << size(24);
+		b << bold(true);
+		b << color( RGB( 255, 0, 0 ) );
+		b << m_pClass->GetName();
+		b << color( RGB( 0, 0, 0 ) );
+		b << "\n\n";
+		b << write(*m_pHelpText);
+
+		b << size(22);
+		b << bold(false);
+		b << m_pClass->GetDescription();
+		b << "\n\n";
+		b << write(*m_pHelpText);
+
+		//
+		// Keys section.
+		//
+		int nCount = m_pClass->GetVariableCount();
+		if (nCount > 0)
+		{
+			//
+			// Keys header.
+			//
+			b << size(24);
+			b << bold(true);
+			b << color( RGB( 48, 190, 0 ) );
+			b << "KEYS";
+			b << color( RGB( 0, 0, 0 ) );
+			b << "\n\n";
+			b << write(*m_pHelpText);
+
+			b << color( RGB( 32, 54, 255 ) );
+			b << "";
+			b << color( RGB( 0, 0, 0 ) );
+
+			//
+			// Keys.
+			//
+			b << size(20);
+			b << bold(false);
+
+			for (int i = 0; i < nCount; i++)
+			{
+				GDinputvariable *pVar = m_pClass->GetVariableAt(i);
+
+				b << bold(true);
+				b << pVar->GetLongName();
+				b << bold(false);
+				b << " ";
+
+				b << italic(true);
+				b << underline(true);
+				b << pVar->GetName();
+				b << underline(false);
+				b << italic(false);
+
+				b << " <";
+				b << color( RGB( 32, 54, 255 ) );
+				b << italic( true );
+				b << pVar->GetTypeText();
+				b << italic( false );
+				b << color( RGB( 0, 0, 0 ) );
+				b << "> ";
+
+				b << pVar->GetDescription();
+				b << "\n\n";
+				b << write(*m_pHelpText);
+			}
+		}
+
+		//
+		// Inputs section.
+		//
+		int nInputCount = m_pClass->GetInputCount();
+		if (nInputCount > 0)
+		{
+			//
+			// Inputs header.
+			//
+			b << "\n";
+			b << size(24);
+			b << bold(true);
+			b << color( RGB( 48, 190, 0 ) );
+			b << "INPUTS";
+			b << color( RGB( 0, 0, 0 ) );
+			b << "\n\n";
+			b << write(*m_pHelpText);
+
+			//
+			// Inputs.
+			//
+			b << size(20);
+
+			for (int i = 0; i < nInputCount; i++)
+			{
+				CClassInput *pInput = m_pClass->GetInput(i);
+
+				b << bold(true);
+				b << pInput->GetName();
+				b << bold(false);
+				b << " ";
+
+				if (pInput->GetType() != iotVoid)
+				{
+					b << "<";
+					b << color( RGB( 32, 54, 255 ) );
+					b << italic( true );
+					b << pInput->GetTypeText();
+					b << italic( false );
+					b << color( RGB( 0, 0, 0 ) );
+					b << "> ";
+				}
+
+				b << pInput->GetDescription();
+				b << "\n\n";
+				b << write(*m_pHelpText);
+			}
+		}
+
+		//
+		// Outputs section.
+		//
+		int nOutputCount = m_pClass->GetOutputCount();
+		if (nOutputCount > 0)
+		{
+			//
+			// Outputs header.
+			//
+			b << "\n";
+			b << size(24);
+			b << bold(true);
+			b << color( RGB( 48, 190, 0 ) );
+			b << "OUTPUTS";
+			b << color( RGB( 0, 0, 0 ) );
+			b << "\n\n";
+			b << write(*m_pHelpText);
+
+			//
+			// Outputs.
+			//
+			b << size(20);
+
+			for (int i = 0; i < nOutputCount; i++)
+			{
+				CClassOutput *pOutput = m_pClass->GetOutput(i);
+
+				b << bold(true);
+				b << pOutput->GetName();
+				b << bold(false);
+				b << " ";
+
+				if (pOutput->GetType() != iotVoid)
+				{
+					b << "<";
+					b << color( RGB( 32, 54, 255 ) );
+					b << italic( true );
+					b << pOutput->GetTypeText();
+					b << italic( false );
+					b << color( RGB( 0, 0, 0 ) );
+					b << "> ";
+				}
+
+				b << pOutput->GetDescription();
+				b << "\n\n";
+				b << write(*m_pHelpText);
+			}
+		}
+	}
+}

@@ -1,0 +1,28 @@
+//-----------------------------------------------------------------------------
+//	GROUPS.VGC
+//
+//	Group Configurations for all Source(TM) Projects
+//-----------------------------------------------------------------------------
+
+///////////////////////
+// Group definitions //
+///////////////////////
+
+$Group "iv_hammer"
+{
+	"iv_hammer_launcher"
+	"hammer_map_launcher"
+	"iv_hammer"
+	"hammer_shader_dx9"
+	"fgdlib"
+	"mathlib"
+	"raytrace"
+	"tier1"
+	"vgui_controls"
+	"matsys_controls"
+	"dme_controls"
+	"movieobjects"
+	"datamodel"
+	"dmxloader"
+	"dmserializers"
+}

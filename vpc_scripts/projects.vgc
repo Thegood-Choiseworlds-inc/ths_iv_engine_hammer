@@ -1,0 +1,84 @@
+//-----------------------------------------------------------------------------
+//	PROJECTS.VGC
+//
+//	Project Configurations for all Source(TM) Projects
+//-----------------------------------------------------------------------------
+
+/////////////////////////
+// Project definitions //
+/////////////////////////
+
+$Project "fgdlib"
+{
+	"fgdlib\fgdlib.vpc" [$WIN32]
+}
+
+$Project "mathlib"
+{
+	"mathlib\mathlib.vpc" [$WINDOWS||$X360||$POSIX]
+}
+
+$Project "raytrace"
+{
+	"raytrace\raytrace.vpc" [$WIN32||$X360||$POSIX]
+}
+
+$Project "tier1"
+{
+	"tier1\tier1.vpc" 	[$WINDOWS || $X360||$POSIX]
+}
+
+$Project "vgui_controls"
+{
+	"vgui2\vgui_controls\vgui_controls.vpc" [$WIN32||$X360||$POSIX]
+}
+
+$Project "dme_controls"
+{
+	"vgui2\dme_controls\dme_controls.vpc" [$WIN32||$POSIX]
+}
+
+$Project "matsys_controls"
+{
+	"vgui2\matsys_controls\matsys_controls.vpc" [$WIN32||$POSIX]
+}
+
+$Project "movieobjects"
+{
+	"movieobjects\movieobjects.vpc" [$WIN32||$POSIX]
+}
+
+$Project "datamodel"
+{
+	"datamodel\datamodel.vpc" [$WIN32||$POSIX]
+}
+
+$Project "dmxloader"
+{
+	"dmxloader\dmxloader.vpc" [$WIN32||$POSIX]
+}
+
+$Project "dmserializers"
+{
+	"dmserializers\dmserializers.vpc" [$WIN32||$POSIX]
+}
+
+$Project "iv_hammer"
+{
+	"hammer\iv_hammer.vpc"
+}
+
+$Project "iv_hammer_launcher"
+{
+	"hammer_launcher\iv_hammer_launcher.vpc"
+}
+
+$Project "hammer_map_launcher"
+{
+	"utils\hammer_map_launcher\hammer_map_launcher.vpc"
+}
+
+$project "hammer_shader_dx9"
+{
+	"materialsystem\stdshaders\hammer_shader_dx9.vpc"
+}

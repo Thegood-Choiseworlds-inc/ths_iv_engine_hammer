@@ -1,0 +1,17 @@
+"Groups"
+{
+	"Libs"
+	{
+		"datamodel" "1"
+		"dme_controls" "1"
+		"dmserializers" "1"
+		"dmxloader" "1"
+		"fgdlib" "1"
+		"mathlib" "1"
+		"matsys_controls" "1"
+		"movieobjects" "1"
+		"raytrace" "1"
+		"tier1" "1"
+		"vgui_controls" "1"
+	}
+}

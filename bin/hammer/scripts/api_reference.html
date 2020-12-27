@@ -1,0 +1,710 @@
+
+<!doctype html>
+<html>
+<head>
+	<title>Hammer</title>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+		body {
+			font-family: Helvetica;
+			font-size: 12pt;
+			background-color: #1e1e1e;
+			color: #f1f1f1;
+			margin: 0;
+			padding: 0;
+			display: grid;
+			grid-template-columns: 300px 1fr;
+			grid-template-rows: auto 1fr;
+			height: 100vh;
+			overflow: hidden;
+		}
+		#header {
+			font-size: 200%;
+			font-weight: bold;
+			background-color: #2d2d30;
+			color: #f1f1f1;
+			border-bottom: 2px solid #007acc;
+			padding: 20px;
+			display: grid;
+			grid-template-columns: auto 1fr;
+			grid-area: 1/1/span 1/span 2;
+		}
+		#header #namecontainer {
+			display: grid;
+			grid-template-columns: auto 1fr;
+			align-items: center;
+		}
+		#header #namecontainer img {
+			padding-right: 10px;
+		}
+		#header #searchbox {
+			align-self: center;
+		}
+		#header #searchbox > input {
+			float: right;
+			width: 400px;
+		}
+		#summary {
+			border-right: 2px solid #007acc;
+			padding: 20px;
+			overflow: auto;
+			grid-area: 2/1/span 1/span 1;
+		}
+		#content {
+			padding: 20px;
+			overflow: auto;
+			grid-area: 2/2/span 1/span 1;
+		}
+		h1 {
+			font-size: 150%;
+			font-weight: bold;
+			color: #007acc;
+			margin: 0 0 5px 0;
+		}
+		h2 {
+			font-size: 120%;
+			text-decoration: underline;
+			color: #007acc;
+		}
+		a, a:hover, a:visited {
+			color: #dcdcaa;
+		}
+		.api {
+			font-family: Consolas, Courier New, Courier;
+			font-size: 11pt;
+			white-space: pre;
+			tab-size: 20px;
+		}
+		.AS-keyword {
+			font-weight: bold;
+			color: #007acc;
+		}
+		.AS-number {
+			font-weight: bold;
+			color: #d8a0df;
+		}
+		.AS-valuetype {
+			font-weight: bold;
+			color: #ff8000;
+		}
+		.AS-classtype {
+			font-weight: bold;
+			color: #4ec9b0;
+		}
+		.AS-enumtype {
+			font-weight: bold;
+			color: #90cc00;
+		}
+		.AS-enumvalue {
+			font-weight: bold;
+			color: #cc9700;
+		}
+		.block {
+			margin: 0px 10px 10px 20px;
+			padding: 10px;
+			border: 1px solid #b1b1b1;
+			background-color: #222222;
+		}
+		.documentation {
+			width: 500px;
+			padding: 10px 40px;
+			font-style: italic;
+		}
+		.indented {
+			padding-left: 20px;
+		}
+		.hidden {
+			display: none;
+		}
+		.link {
+			cursor: pointer;
+			color: #dcdcaa;
+		}
+		.link:hover {
+			text-decoration: underline;
+			color: #dcdcaa;
+		}
+		.generated_on {
+			padding-top: 10px;
+			font-size: 80%;
+			color: #666666;
+		}
+
+		
+	</style>
+	<script type="text/javascript">
+		$(document).ready(() => {
+			// handle search shortcut
+			$(document).keydown((ev) => {
+				if (ev.key == 'F4' || ev.code == 'F4')
+					$('#searchbox input').focus();
+			});
+
+			// handle search, need to set same handler to multiple events, so wrap in
+			// anonymous function so we don't litter the global namespace
+			(() => {
+
+				let handler = (ev) => {
+					const
+						v = ev.target.value.toLowerCase(),
+						m = '[name' + (v.length ? '*=' + v : '') + ']',
+						s = '#content '+m,
+						h = '#content [name]:not('+m+')';
+					$(h).hide();
+					$(s).show().parents('[name]').show();
+				};
+				$('#searchbox input').keyup(handler);
+				$('#searchbox input').change(handler);
+			})();
+
+			// handle collapsing/expanding the summary
+			$('#summary div.expandable').click((ev)=>{
+				let s = $(ev.target).parents('div.expandable').first(),
+					t = s.siblings('div.indented');
+				t.toggleClass('hidden');
+				s.find('span').first().html(t.hasClass('hidden') ? '+' : '-');
+			});
+
+			// handle anchor jumps
+			$('span[targetname]').click((ev)=>{
+				let targetName = $(ev.target).attr('targetname'),
+					target = $('a[name=' + targetName + ']').first();
+				$('#content').animate({
+					scrollTop: $('#content').scrollTop() + target.position().top - $('#header').innerHeight() - 5,
+				}, 250);
+			});
+
+			// any additional javascript
+			
+		});
+	</script>
+</head>
+<body>
+	<div id="header">
+		<div id="namecontainer">
+			
+			<span>Hammer - AS Interface v0.1</span>
+		</div>
+		<div id="searchbox"><input type="text" class="api" placeholder="Search the documentation, hit F4 to focus..."></div>
+	</div>
+<div id="summary"><div class="summary"><div class="api expandable link" targetname="___valuetypes"><span>+</span> <span>Value Types</span></div><div class="indented hidden"><div class="summary"><span class="api link" targetname="cmapface">CMapFace</span></div><div class="summary"><span class="api link" targetname="guidata">GUIData</span></div><div class="summary"><span class="api link" targetname="qangle">QAngle</span></div><div class="summary"><span class="api link" targetname="vmatrix">VMatrix</span></div><div class="summary"><span class="api link" targetname="vector">Vector</span></div><div class="summary"><span class="api link" targetname="vector2d">Vector2D</span></div><div class="summary"><span class="api link" targetname="vector4d">Vector4D</span></div><div class="summary"><span class="api link" targetname="dictionaryvalue">dictionaryValue</span></div><div class="summary"><span class="api link" targetname="string">string</span></div></div></div><div class="summary"><div class="api expandable link" targetname="___classes"><span>+</span> <span>Classes</span></div><div class="indented hidden"><div class="summary"><span class="api link" targetname="boundbox">BoundBox</span></div><div class="summary"><span class="api link" targetname="cmapclass">CMapClass</span></div><div class="summary"><span class="api link" targetname="cmapgroup">CMapGroup</span></div><div class="summary"><span class="api link" targetname="cmapsolid">CMapSolid</span></div><div class="summary"><span class="api link" targetname="scriptsolid">ScriptSolid</span></div><div class="summary"><span class="api link" targetname="array">array</span></div><div class="summary"><span class="api link" targetname="dictionary">dictionary</span></div><div class="summary"><span class="api link" targetname="grid">grid</span></div></div></div><div class="summary"><div class="api expandable link" targetname="___globalfunctions"><span>+</span> <span>Global Functions</span></div><div class="indented hidden"><div class="summary"><span class="api link" targetname="registerscriptsolid">RegisterScriptSolid</span></div><div class="summary"><span class="api link" targetname="abs">abs</span></div><div class="summary"><span class="api link" targetname="acos">acos</span></div><div class="summary"><span class="api link" targetname="asin">asin</span></div><div class="summary"><span class="api link" targetname="atan">atan</span></div><div class="summary"><span class="api link" targetname="atan2">atan2</span></div><div class="summary"><span class="api link" targetname="ceil">ceil</span></div><div class="summary"><span class="api link" targetname="closeto">closeTo</span></div><div class="summary"><span class="api link" targetname="cos">cos</span></div><div class="summary"><span class="api link" targetname="cosh">cosh</span></div><div class="summary"><span class="api link" targetname="floor">floor</span></div><div class="summary"><span class="api link" targetname="fpfromieee">fpFromIEEE</span></div><div class="summary"><span class="api link" targetname="fptoieee">fpToIEEE</span></div><div class="summary"><span class="api link" targetname="fraction">fraction</span></div><div class="summary"><span class="api link" targetname="getexceptioninfo">getExceptionInfo</span></div><div class="summary"><span class="api link" targetname="join">join</span></div><div class="summary"><span class="api link" targetname="log">log</span></div><div class="summary"><span class="api link" targetname="log10">log10</span></div><div class="summary"><span class="api link" targetname="pow">pow</span></div><div class="summary"><span class="api link" targetname="print">print</span></div><div class="summary"><span class="api link" targetname="rint">rint</span></div><div class="summary"><span class="api link" targetname="sin">sin</span></div><div class="summary"><span class="api link" targetname="sinh">sinh</span></div><div class="summary"><span class="api link" targetname="sqrt">sqrt</span></div><div class="summary"><span class="api link" targetname="tan">tan</span></div><div class="summary"><span class="api link" targetname="tanh">tanh</span></div><div class="summary"><span class="api link" targetname="throw">throw</span></div></div></div><div class="summary"><div class="api expandable link" targetname="___enums"><span>+</span> <span>Enums</span></div><div class="indented hidden"><div class="summary"><span class="api link" targetname="guielement_t">GuiElement_t</span></div><div class="summary"><span class="api link" targetname="inittexflags_t">InitTexFlags_t</span></div><div class="summary"><span class="api link" targetname="texturealignment_t">TextureAlignment_t</span></div></div></div><div class="summary"><div class="api expandable link" targetname="___globalproperties"><span>+</span> <span>Global Properties</span></div><div class="indented hidden"><div class="summary"><span class="api link" targetname="vec3_angle">vec3_angle</span></div><div class="summary"><span class="api link" targetname="vec3_invalid">vec3_invalid</span></div><div class="summary"><span class="api link" targetname="vec3_origin">vec3_origin</span></div><div class="summary"><span class="api link" targetname="vec4_origin">vec4_origin</span></div></div></div></div><div id="content"><a name="___valuetypes"></a><h1 name="value types">Value Types</h1>
+<div name="___valuetypes"><a name="cmapface"></a><h2 name="cmapface">CMapFace</h2>
+<div name="cmapface"><a name="cmapface"></a><div class="block" name="cmapface">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">CMapFace</span>
+{
+	<span class="AS-valuetype">CMapFace</span>();
+	~<span class="AS-valuetype">CMapFace</span>();
+	<span class="AS-keyword">void</span> CreateFace(<span class="AS-valuetype">Vector</span>[]@ points, <span class="AS-keyword">int</span> numPoints);
+}</div></div>
+</div><a name="guidata"></a><h2 name="guidata">GUIData</h2>
+<div name="guidata"><a name="guidata"></a><div class="block" name="guidata">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">GUIData</span>
+{
+	<span class="AS-valuetype">GUIData</span>(<span class="AS-enumtype">GuiElement_t</span>, <span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">int64</span>);
+	<span class="AS-valuetype">GUIData</span>(<span class="AS-enumtype">GuiElement_t</span>, <span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">double</span>);
+	<span class="AS-valuetype">GUIData</span>(<span class="AS-enumtype">GuiElement_t</span> type, <span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span> text);
+	<span class="AS-valuetype">GUIData</span>(<span class="AS-enumtype">GuiElement_t</span> type);
+}</div></div>
+</div><a name="qangle"></a><h2 name="qangle">QAngle</h2>
+<div name="qangle"><a name="qangle"></a><div class="block" name="qangle">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">QAngle</span>
+{
+	<span class="AS-valuetype">QAngle</span>();
+	<span class="AS-valuetype">QAngle</span>(<span class="AS-keyword">float</span> x, <span class="AS-keyword">float</span> y, <span class="AS-keyword">float</span> z);
+	<span class="AS-keyword">void</span> Init(<span class="AS-keyword">float</span> x, <span class="AS-keyword">float</span> y, <span class="AS-keyword">float</span> z);
+	<span class="AS-keyword">void</span> Random(<span class="AS-keyword">float</span> minVal, <span class="AS-keyword">float</span> maxVal);
+	<span class="AS-keyword">bool</span> IsValid() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> Invalidate();
+	<span class="AS-keyword">float</span> Length() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> LengthSqr() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> operator[](<span class="AS-keyword">int</span> idx) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span>&amp; operator[](<span class="AS-keyword">int</span> idx);
+	<span class="AS-keyword">bool</span> operator==(<span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">QAngle</span>&amp; operator=(<span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">QAngle</span>&amp; operator+=(<span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">QAngle</span>&amp; operator-=(<span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">QAngle</span>&amp; operator*=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">QAngle</span>&amp; operator/=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">QAngle</span> operator-() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">QAngle</span> operator+(<span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">QAngle</span> operator-(<span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">QAngle</span> operator*(<span class="AS-keyword">float</span> fl) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">QAngle</span> operator/(<span class="AS-keyword">float</span> fl) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> x;
+	<span class="AS-keyword">float</span> y;
+	<span class="AS-keyword">float</span> z;
+}</div></div>
+</div><a name="vmatrix"></a><h2 name="vmatrix">VMatrix</h2>
+<div name="vmatrix"><a name="vmatrix"></a><div class="block" name="vmatrix">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">VMatrix</span>
+{
+	<span class="AS-valuetype">VMatrix</span>();
+	<span class="AS-valuetype">VMatrix</span>(<span class="AS-keyword">float</span> m00, <span class="AS-keyword">float</span> m01, <span class="AS-keyword">float</span> m02, <span class="AS-keyword">float</span> m03, <span class="AS-keyword">float</span> m10, <span class="AS-keyword">float</span> m11, <span class="AS-keyword">float</span> m12, <span class="AS-keyword">float</span> m13, <span class="AS-keyword">float</span> m20, <span class="AS-keyword">float</span> m21, <span class="AS-keyword">float</span> m22, <span class="AS-keyword">float</span> m23, <span class="AS-keyword">float</span> m30, <span class="AS-keyword">float</span> m31, <span class="AS-keyword">float</span> m32, <span class="AS-keyword">float</span> m33);
+	<span class="AS-valuetype">VMatrix</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> forward, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> left, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> up);
+	<span class="AS-valuetype">VMatrix</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> forward, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> left, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> up, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> translation);
+	<span class="AS-keyword">void</span> Init(<span class="AS-keyword">float</span> m00, <span class="AS-keyword">float</span> m01, <span class="AS-keyword">float</span> m02, <span class="AS-keyword">float</span> m03, <span class="AS-keyword">float</span> m10, <span class="AS-keyword">float</span> m11, <span class="AS-keyword">float</span> m12, <span class="AS-keyword">float</span> m13, <span class="AS-keyword">float</span> m20, <span class="AS-keyword">float</span> m21, <span class="AS-keyword">float</span> m22, <span class="AS-keyword">float</span> m23, <span class="AS-keyword">float</span> m30, <span class="AS-keyword">float</span> m31, <span class="AS-keyword">float</span> m32, <span class="AS-keyword">float</span> m33);
+	<span class="AS-keyword">float</span>&amp; operator[](<span class="AS-keyword">uint</span> x, <span class="AS-keyword">uint</span> y);
+	<span class="AS-keyword">const</span> <span class="AS-keyword">float</span>&amp; operator[](<span class="AS-keyword">uint</span> x, <span class="AS-keyword">uint</span> y) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> SetLeft(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> left);
+	<span class="AS-keyword">void</span> SetUp(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> up);
+	<span class="AS-keyword">void</span> SetForward(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> forward);
+	<span class="AS-keyword">void</span> GetBasisVectors(<span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">out</span> forward, <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">out</span> left, <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">out</span> up) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> SetBasisVectors(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> forward, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> left, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> up);
+	<span class="AS-keyword">void</span> SetTranslation(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> trans);
+	<span class="AS-keyword">void</span> PreTranslate(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> trans);
+	<span class="AS-keyword">void</span> PostTranslate(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> trans);
+	<span class="AS-valuetype">Vector</span> GetLeft() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> GetUp() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> GetForward() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> GetTranslation() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> ApplyRotation(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> vec) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> VMul3x3(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> vec) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> VMul3x3Transpose(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> vec) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> VMul4x3(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> vec) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> VMul4x3Transpose(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> vec) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> MatrixMul(<span class="AS-keyword">const</span> <span class="AS-valuetype">VMatrix</span>&amp;<span class="AS-keyword">in</span> vm, <span class="AS-valuetype">VMatrix</span>&amp;<span class="AS-keyword">out</span> out) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> Identity();
+	<span class="AS-keyword">bool</span> IsIdentity() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> SetupMatrixOrgAngles(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> origin, <span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> angles);
+	<span class="AS-keyword">void</span> SetupMatrixAngles(<span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> angles);
+	<span class="AS-keyword">bool</span> InverseGeneral(<span class="AS-valuetype">VMatrix</span>&amp;<span class="AS-keyword">out</span> inverse) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">VMatrix</span> InverseTR() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> IsRotationMatrix() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> GetScale() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">VMatrix</span> Scale(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> scale);
+	<span class="AS-valuetype">VMatrix</span> NormalizeBasisVectors() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">VMatrix</span> Transpose() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">VMatrix</span> Transpose3x3() <span class="AS-keyword">const</span>;
+}</div></div>
+</div><a name="vector"></a><h2 name="vector">Vector</h2>
+<div name="vector"><a name="vector"></a><div class="block" name="vector">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">Vector</span>
+{
+	<span class="AS-valuetype">Vector</span>();
+	<span class="AS-valuetype">Vector</span>(<span class="AS-keyword">float</span> x, <span class="AS-keyword">float</span> y, <span class="AS-keyword">float</span> z);
+	<span class="AS-valuetype">Vector</span>(<span class="AS-keyword">float</span> xyz);
+	<span class="AS-keyword">float</span> operator[](<span class="AS-keyword">int</span> idx) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span>&amp; operator[](<span class="AS-keyword">int</span> idx);
+	<span class="AS-keyword">void</span> Init(<span class="AS-keyword">float</span> x, <span class="AS-keyword">float</span> y, <span class="AS-keyword">float</span> z);
+	<span class="AS-keyword">bool</span> IsValid() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> Invalidate();
+	<span class="AS-keyword">void</span> Random(<span class="AS-keyword">float</span> minVal, <span class="AS-keyword">float</span> maxVal);
+	<span class="AS-keyword">void</span> Zero();
+	<span class="AS-keyword">float</span> NormalizeInPlace();
+	<span class="AS-valuetype">Vector</span> Normalized() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> Negate();
+	<span class="AS-keyword">float</span> Length() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> Length2D() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> Length2DSqr() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> LengthSqr() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> IsZero(<span class="AS-keyword">float</span> tolerance) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> IsLengthGreaterThan(<span class="AS-keyword">float</span> val) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> IsLengthLessThan(<span class="AS-keyword">float</span> val) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> WithinAABox(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> mins, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> maxs);
+	<span class="AS-keyword">float</span> DistTo(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> DistToSqr(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> MulAdd(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> a, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> b, <span class="AS-keyword">float</span> scalar);
+	<span class="AS-keyword">float</span> Dot(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> Cross(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> Min(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> Max(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp; AsVector2D() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span>&amp; AsVector2D();
+	<span class="AS-keyword">bool</span> operator==(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span>&amp; operator+=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector</span>&amp; operator+=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">Vector</span>&amp; operator-=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector</span>&amp; operator-=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">Vector</span>&amp; operator*=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector</span>&amp; operator*=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">Vector</span>&amp; operator/=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector</span>&amp; operator/=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">Vector</span>&amp; operator=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector</span> operator-() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> operator+(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> operator-(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> operator*(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> operator/(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> operator*(<span class="AS-keyword">float</span> fl) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span> operator/(<span class="AS-keyword">float</span> fl) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> x;
+	<span class="AS-keyword">float</span> y;
+	<span class="AS-keyword">float</span> z;
+}</div></div>
+</div><a name="vector2d"></a><h2 name="vector2d">Vector2D</h2>
+<div name="vector2d"><a name="vector2d"></a><div class="block" name="vector2d">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">Vector2D</span>
+{
+	<span class="AS-valuetype">Vector2D</span>();
+	<span class="AS-valuetype">Vector2D</span>(<span class="AS-keyword">float</span> x, <span class="AS-keyword">float</span> y);
+	<span class="AS-valuetype">Vector2D</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-keyword">float</span> operator[](<span class="AS-keyword">int</span> idx) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span>&amp; operator[](<span class="AS-keyword">int</span> idx);
+	<span class="AS-keyword">void</span> Init(<span class="AS-keyword">float</span> x, <span class="AS-keyword">float</span> y);
+	<span class="AS-keyword">bool</span> IsValid() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> Random(<span class="AS-keyword">float</span> minVal, <span class="AS-keyword">float</span> maxVal);
+	<span class="AS-keyword">void</span> Negate();
+	<span class="AS-keyword">float</span> Length() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> LengthSqr() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> IsZero(<span class="AS-keyword">float</span> tolerance) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> NormalizeInPlace();
+	<span class="AS-keyword">bool</span> IsLengthGreaterThan(<span class="AS-keyword">float</span> val) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> IsLengthLessThan(<span class="AS-keyword">float</span> val) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> DistTo(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> DistToSqr(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> MulAdd(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> a, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> b, <span class="AS-keyword">float</span> scalar);
+	<span class="AS-keyword">float</span> Dot(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span> Min(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span> Max(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> operator==(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span>&amp; operator+=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector2D</span>&amp; operator-=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector2D</span>&amp; operator*=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector2D</span>&amp; operator*=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">Vector2D</span>&amp; operator/=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector2D</span>&amp; operator/=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">Vector2D</span>&amp; operator=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector2D</span> operator-() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span> operator+(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span> operator-(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span> operator*(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span> operator/(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span> operator*(<span class="AS-keyword">float</span> fl) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span> operator/(<span class="AS-keyword">float</span> fl) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> x;
+	<span class="AS-keyword">float</span> y;
+}</div></div>
+</div><a name="vector4d"></a><h2 name="vector4d">Vector4D</h2>
+<div name="vector4d"><a name="vector4d"></a><div class="block" name="vector4d">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">Vector4D</span>
+{
+	<span class="AS-valuetype">Vector4D</span>();
+	<span class="AS-valuetype">Vector4D</span>(<span class="AS-keyword">float</span> x, <span class="AS-keyword">float</span> y, <span class="AS-keyword">float</span> z, <span class="AS-keyword">float</span> w);
+	<span class="AS-valuetype">Vector4D</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> vec, <span class="AS-keyword">float</span> w);
+	<span class="AS-valuetype">Vector4D</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-keyword">void</span> Init(<span class="AS-keyword">float</span> x, <span class="AS-keyword">float</span> y, <span class="AS-keyword">float</span> z, <span class="AS-keyword">float</span> w);
+	<span class="AS-keyword">void</span> Init(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> vec, <span class="AS-keyword">float</span> w);
+	<span class="AS-keyword">bool</span> IsValid() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> Negate();
+	<span class="AS-keyword">float</span> Length() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> LengthSqr() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> IsZero(<span class="AS-keyword">float</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> DistTo(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> DistToSqr(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> MulAdd(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> a, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> b, <span class="AS-keyword">float</span> scalar);
+	<span class="AS-keyword">float</span> Dot(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> operator[](<span class="AS-keyword">int</span> idx) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span>&amp; operator[](<span class="AS-keyword">int</span> idx);
+	<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp; AsVector3D() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector</span>&amp; AsVector3D();
+	<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector2D</span>&amp; AsVector2D() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector2D</span>&amp; AsVector2D();
+	<span class="AS-keyword">void</span> Random(<span class="AS-keyword">float</span> minVal, <span class="AS-keyword">float</span> maxVal);
+	<span class="AS-keyword">bool</span> operator==(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> other) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">Vector4D</span>&amp; operator+=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector4D</span>&amp; operator-=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector4D</span>&amp; operator*=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector4D</span>&amp; operator*=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-valuetype">Vector4D</span>&amp; operator/=(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">Vector4D</span>&amp; operator/=(<span class="AS-keyword">float</span> fl);
+	<span class="AS-keyword">float</span> x;
+	<span class="AS-keyword">float</span> y;
+	<span class="AS-keyword">float</span> z;
+	<span class="AS-keyword">float</span> w;
+}</div></div>
+</div><a name="dictionaryvalue"></a><h2 name="dictionaryvalue">dictionaryValue</h2>
+<div name="dictionaryvalue"><a name="dictionaryvalue"></a><div class="block" name="dictionaryvalue">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">dictionaryValue</span>
+{
+	<span class="AS-valuetype">dictionaryValue</span>();
+	~<span class="AS-valuetype">dictionaryValue</span>();
+	<span class="AS-valuetype">dictionaryValue</span>&amp; operator=(<span class="AS-keyword">const</span> <span class="AS-valuetype">dictionaryValue</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-valuetype">dictionaryValue</span>&amp; operator@=(<span class="AS-keyword">const</span> ?&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-valuetype">dictionaryValue</span>&amp; operator@=(<span class="AS-keyword">const</span> <span class="AS-valuetype">dictionaryValue</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-valuetype">dictionaryValue</span>&amp; operator=(<span class="AS-keyword">const</span> ?&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-valuetype">dictionaryValue</span>&amp; operator=(<span class="AS-keyword">double</span>);
+	<span class="AS-valuetype">dictionaryValue</span>&amp; operator=(<span class="AS-keyword">int64</span>);
+	<span class="AS-keyword">void</span> opCast(?&amp;<span class="AS-keyword">out</span>);
+	<span class="AS-keyword">void</span> opConv(?&amp;<span class="AS-keyword">out</span>);
+	<span class="AS-keyword">int64</span> opConv();
+	<span class="AS-keyword">double</span> opConv();
+}</div></div>
+</div><a name="string"></a><h2 name="string">string</h2>
+<div name="string"><a name="string"></a><div class="block" name="string">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-valuetype">string</span>
+{
+	<span class="AS-valuetype">string</span>();
+	<span class="AS-valuetype">string</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span> other);
+	<span class="AS-valuetype">string</span>(<span class="AS-keyword">bool</span> num);
+	<span class="AS-valuetype">string</span>(<span class="AS-keyword">int</span> num);
+	<span class="AS-valuetype">string</span>(<span class="AS-keyword">uint</span> num);
+	<span class="AS-valuetype">string</span>(<span class="AS-keyword">int64</span> num);
+	<span class="AS-valuetype">string</span>(<span class="AS-keyword">uint64</span> num);
+	<span class="AS-valuetype">string</span>(<span class="AS-keyword">float</span> num);
+	<span class="AS-valuetype">string</span>(<span class="AS-keyword">double</span> num);
+	~<span class="AS-valuetype">string</span>();
+	<span class="AS-valuetype">string</span>&amp; operator=(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span> str);
+	<span class="AS-valuetype">string</span>&amp; operator=(<span class="AS-keyword">int64</span> num);
+	<span class="AS-valuetype">string</span>&amp; operator=(<span class="AS-keyword">uint64</span> num);
+	<span class="AS-valuetype">string</span>&amp; operator=(<span class="AS-keyword">double</span> num);
+	<span class="AS-valuetype">string</span>&amp; operator=(<span class="AS-keyword">float</span> num);
+	<span class="AS-keyword">uint8</span>&amp; operator[](<span class="AS-keyword">uint</span> idx);
+	<span class="AS-keyword">const</span> <span class="AS-keyword">uint8</span>&amp; operator[](<span class="AS-keyword">uint</span> idx) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span>&amp; operator+=(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-valuetype">string</span>&amp; operator+=(<span class="AS-keyword">int64</span>);
+	<span class="AS-valuetype">string</span>&amp; operator+=(<span class="AS-keyword">uint64</span>);
+	<span class="AS-valuetype">string</span>&amp; operator+=(<span class="AS-keyword">double</span>);
+	<span class="AS-valuetype">string</span>&amp; operator+=(<span class="AS-keyword">float</span>);
+	<span class="AS-valuetype">string</span> operator+(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> operator+(<span class="AS-keyword">int64</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> operator+(<span class="AS-keyword">uint64</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> opAdd_r(<span class="AS-keyword">int64</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> opAdd_r(<span class="AS-keyword">uint64</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> operator+(<span class="AS-keyword">double</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> opAdd_r(<span class="AS-keyword">double</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> operator+(<span class="AS-keyword">float</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> opAdd_r(<span class="AS-keyword">float</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> operator==(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">uint</span> len() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">uint</span> length() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">uint</span> resize() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> empty() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> tolower() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> toupper() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> trim() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">int64</span> toInt() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">float</span> toFloat() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">uint</span> locate(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">const</span> <span class="AS-keyword">uint</span> = <span class="AS-number">0</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> substr(<span class="AS-keyword">const</span> <span class="AS-keyword">int</span> start, <span class="AS-keyword">const</span> <span class="AS-keyword">int</span> length) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> subString(<span class="AS-keyword">const</span> <span class="AS-keyword">int</span> start, <span class="AS-keyword">const</span> <span class="AS-keyword">int</span> length) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> substr(<span class="AS-keyword">const</span> <span class="AS-keyword">int</span> start) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> subString(<span class="AS-keyword">const</span> <span class="AS-keyword">int</span> start) <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span> replace(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span> search, <span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span> replace) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> isAlpha() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> isNumerical() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> isNumeric() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> isAlphaNumerical() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">string</span>[]@ split(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>) <span class="AS-keyword">const</span>;
+}</div></div>
+</div></div><a name="___classes"></a><h1 name="classes">Classes</h1>
+<div name="___classes"><a name="boundbox"></a><h2 name="boundbox">BoundBox</h2>
+<div name="boundbox"><a name="boundbox"></a><div class="block" name="boundbox">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-classtype">BoundBox</span>
+{
+	<span class="AS-keyword">void</span> GetBoundsCenter(<span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">out</span> center) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> ContainsPoint(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> point) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> GetBoundsSize(<span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">out</span> size) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span> maxs;
+	<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span> mins;
+}</div></div>
+</div><a name="cmapclass"></a><h2 name="cmapclass">CMapClass</h2>
+<div name="cmapclass"><a name="cmapclass"></a><div class="block" name="cmapclass">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-classtype">CMapClass</span>
+{
+}</div></div>
+</div><a name="cmapgroup"></a><h2 name="cmapgroup">CMapGroup</h2>
+<div name="cmapgroup"><a name="cmapgroup"></a><div class="block" name="cmapgroup">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-classtype">CMapGroup</span>
+{
+	<span class="AS-classtype">CMapGroup</span>@ <span class="AS-classtype">CMapGroup</span>();
+	<span class="AS-keyword">void</span> AddChild(<span class="AS-classtype">CMapClass</span>@ child);
+	<span class="AS-keyword">void</span> CalcBounds(<span class="AS-keyword">bool</span> full);
+	<span class="AS-keyword">void</span> GetBoundsSize(<span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">out</span> size);
+	<span class="AS-keyword">void</span> TransMove(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> delta);
+	<span class="AS-keyword">void</span> TransRotate(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> refPoint, <span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> angle);
+	<span class="AS-keyword">void</span> TransScale(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> refPoint, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> scale);
+	<span class="AS-classtype">CMapClass</span>@ opImplCast();
+}</div></div>
+</div><a name="cmapsolid"></a><h2 name="cmapsolid">CMapSolid</h2>
+<div name="cmapsolid"><a name="cmapsolid"></a><div class="block" name="cmapsolid">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-classtype">CMapSolid</span>
+{
+	<span class="AS-classtype">CMapSolid</span>@ <span class="AS-classtype">CMapSolid</span>();
+	<span class="AS-keyword">void</span> AddFace(<span class="AS-keyword">const</span> <span class="AS-valuetype">CMapFace</span>&amp;<span class="AS-keyword">in</span> face);
+	<span class="AS-keyword">void</span> InitializeTextureAxes(<span class="AS-enumtype">TextureAlignment_t</span> align, <span class="AS-keyword">uint</span> initTexFlags);
+	<span class="AS-keyword">void</span> CalcBounds(<span class="AS-keyword">bool</span> full);
+	<span class="AS-keyword">void</span> GetBoundsSize(<span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">out</span> size);
+	<span class="AS-keyword">void</span> TransMove(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> delta);
+	<span class="AS-keyword">void</span> TransRotate(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> refPoint, <span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span>&amp;<span class="AS-keyword">in</span> angle);
+	<span class="AS-keyword">void</span> TransScale(<span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> refPoint, <span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span>&amp;<span class="AS-keyword">in</span> scale);
+	<span class="AS-classtype">CMapClass</span>@ opImplCast();
+}</div></div>
+</div><a name="scriptsolid"></a><h2 name="scriptsolid">ScriptSolid</h2>
+<div name="scriptsolid"><a name="scriptsolid"></a><div class="block" name="scriptsolid">
+<div class="api"><span class="AS-keyword">interface</span> <span class="AS-classtype">ScriptSolid</span>
+{
+	<span class="AS-valuetype">GUIData</span>[]@ GetGuiData() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> GuiClosed(<span class="AS-keyword">const</span> <span class="AS-classtype">dictionary</span>@ dict);
+	<span class="AS-classtype">CMapClass</span>@ CreateMapSolid(<span class="AS-keyword">const</span> <span class="AS-classtype">BoundBox</span>@ box, <span class="AS-enumtype">TextureAlignment_t</span> align);
+}</div></div>
+</div><a name="array&lt;class t&gt;"></a><h2 name="array<class t>">array<class T></h2>
+<div name="array&lt;class t&gt;"><a name="array"></a><div class="block" name="array">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-classtype">array</span>&lt;<span class="AS-keyword">class</span> T&gt;
+{
+	T[]@ <span class="AS-classtype">array</span>(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span>);
+	T[]@ <span class="AS-classtype">array</span>(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">uint</span> length);
+	T[]@ <span class="AS-classtype">array</span>(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">uint</span> length, <span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> value);
+	T[]@ $beh4(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span> type, <span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span> list) { repeat T };
+	T&amp; operator[](<span class="AS-keyword">uint</span> index);
+	<span class="AS-keyword">const</span> T&amp; operator[](<span class="AS-keyword">uint</span> index) <span class="AS-keyword">const</span>;
+	T[]&amp; operator=(<span class="AS-keyword">const</span> T[]&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-keyword">void</span> insertAt(<span class="AS-keyword">uint</span> index, <span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> value);
+	<span class="AS-keyword">void</span> insertAt(<span class="AS-keyword">uint</span> index, <span class="AS-keyword">const</span> T[]&amp;<span class="AS-keyword">inout</span> arr);
+	<span class="AS-keyword">void</span> insertLast(<span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> value);
+	<span class="AS-keyword">void</span> removeAt(<span class="AS-keyword">uint</span> index);
+	<span class="AS-keyword">void</span> removeLast();
+	<span class="AS-keyword">void</span> removeRange(<span class="AS-keyword">uint</span> start, <span class="AS-keyword">uint</span> count);
+	<span class="AS-keyword">uint</span> length() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> reserve(<span class="AS-keyword">uint</span> length);
+	<span class="AS-keyword">void</span> resize(<span class="AS-keyword">uint</span> length);
+	<span class="AS-keyword">void</span> sortAsc();
+	<span class="AS-keyword">void</span> sortAsc(<span class="AS-keyword">uint</span> startAt, <span class="AS-keyword">uint</span> count);
+	<span class="AS-keyword">void</span> sortDesc();
+	<span class="AS-keyword">void</span> sortDesc(<span class="AS-keyword">uint</span> startAt, <span class="AS-keyword">uint</span> count);
+	<span class="AS-keyword">void</span> reverse();
+	<span class="AS-keyword">int</span> find(<span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> value) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">int</span> find(<span class="AS-keyword">uint</span> startAt, <span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> value) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">int</span> findByRef(<span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> value) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">int</span> findByRef(<span class="AS-keyword">uint</span> startAt, <span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> value) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> operator==(<span class="AS-keyword">const</span> T[]&amp;<span class="AS-keyword">in</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> isEmpty() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> sort(<span class="AS-classtype">array</span>::less&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">uint</span> startAt = <span class="AS-number">0</span>, <span class="AS-keyword">uint</span> count = <span class="AS-keyword">uint</span> ( - <span class="AS-number">1</span> ));
+	<span class="AS-keyword">callback</span> <span class="AS-keyword">bool</span> less(<span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> a, <span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span> b);
+}</div></div>
+</div><a name="dictionary"></a><h2 name="dictionary">dictionary</h2>
+<div name="dictionary"><a name="dictionary"></a><div class="block" name="dictionary">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-classtype">dictionary</span>
+{
+	<span class="AS-classtype">dictionary</span>@ <span class="AS-classtype">dictionary</span>();
+	<span class="AS-classtype">dictionary</span>@ $beh4(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span>) { repeat { <span class="AS-valuetype">string</span>, ? } };
+	<span class="AS-classtype">dictionary</span>&amp; operator=(<span class="AS-keyword">const</span> <span class="AS-classtype">dictionary</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-keyword">void</span> set(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">const</span> ?&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-keyword">bool</span> <span class="AS-keyword">get</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, ?&amp;<span class="AS-keyword">out</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> set(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">const</span> <span class="AS-keyword">int64</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-keyword">bool</span> <span class="AS-keyword">get</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">int64</span>&amp;<span class="AS-keyword">out</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> set(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">const</span> <span class="AS-keyword">double</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-keyword">bool</span> <span class="AS-keyword">get</span>(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">double</span>&amp;<span class="AS-keyword">out</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> exists(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> isEmpty() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">uint</span> getSize() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">bool</span> delete(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-keyword">void</span> deleteAll();
+	<span class="AS-valuetype">string</span>[]@ getKeys() <span class="AS-keyword">const</span>;
+	<span class="AS-valuetype">dictionaryValue</span>&amp; operator[](<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-keyword">const</span> <span class="AS-valuetype">dictionaryValue</span>&amp; operator[](<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>) <span class="AS-keyword">const</span>;
+}</div></div>
+</div><a name="grid&lt;class t&gt;"></a><h2 name="grid<class t>">grid<class T></h2>
+<div name="grid&lt;class t&gt;"><a name="grid"></a><div class="block" name="grid">
+<div class="api"><span class="AS-keyword">class</span> <span class="AS-classtype">grid</span>&lt;<span class="AS-keyword">class</span> T&gt;
+{
+	<span class="AS-classtype">grid</span>&lt;T&gt;@ <span class="AS-classtype">grid</span>(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-classtype">grid</span>&lt;T&gt;@ <span class="AS-classtype">grid</span>(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">uint</span>, <span class="AS-keyword">uint</span>);
+	<span class="AS-classtype">grid</span>&lt;T&gt;@ <span class="AS-classtype">grid</span>(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">uint</span>, <span class="AS-keyword">uint</span>, <span class="AS-keyword">const</span> T&amp;<span class="AS-keyword">in</span>);
+	<span class="AS-classtype">grid</span>&lt;T&gt;@ $beh4(<span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span> type, <span class="AS-keyword">int</span>&amp;<span class="AS-keyword">in</span> list) { repeat { repeat_same T } };
+	T&amp; operator[](<span class="AS-keyword">uint</span>, <span class="AS-keyword">uint</span>);
+	<span class="AS-keyword">const</span> T&amp; operator[](<span class="AS-keyword">uint</span>, <span class="AS-keyword">uint</span>) <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">void</span> resize(<span class="AS-keyword">uint</span> width, <span class="AS-keyword">uint</span> height);
+	<span class="AS-keyword">uint</span> width() <span class="AS-keyword">const</span>;
+	<span class="AS-keyword">uint</span> height() <span class="AS-keyword">const</span>;
+}</div></div>
+</div></div><a name="___enums"></a><h1 name="enums">Enums</h1>
+<div name="___enums"><a name="guielement_t"></a><div class="block" name="guielement_t">
+<div class="api"><span class="AS-keyword">enum</span> <span class="AS-enumtype">GuiElement_t</span>
+{
+	<span class="AS-enumvalue">Label</span> = <span class="AS-number">0</span>,
+	<span class="AS-enumvalue">TextBox</span> = <span class="AS-number">1</span> &lt;&lt; <span class="AS-number">0</span>,
+	<span class="AS-enumvalue">Divider</span> = <span class="AS-number">1</span> &lt;&lt; <span class="AS-number">1</span>
+}</div></div>
+<a name="inittexflags_t"></a><div class="block" name="inittexflags_t">
+<div class="api"><span class="AS-keyword">enum</span> <span class="AS-enumtype">InitTexFlags_t</span>
+{
+	<span class="AS-enumvalue">INIT_TEXTURE_FORCE</span> = <span class="AS-number">1</span>,
+	<span class="AS-enumvalue">INIT_TEXTURE_AXES</span> = <span class="AS-number">2</span>,
+	<span class="AS-enumvalue">INIT_TEXTURE_ROTATION</span> = <span class="AS-number">4</span>,
+	<span class="AS-enumvalue">INIT_TEXTURE_SHIFT</span> = <span class="AS-number">8</span>,
+	<span class="AS-enumvalue">INIT_TEXTURE_SCALE</span> = <span class="AS-number">16</span>,
+	<span class="AS-enumvalue">INIT_TEXTURE_ALL</span> = <span class="AS-number">30</span>
+}</div></div>
+<a name="texturealignment_t"></a><div class="block" name="texturealignment_t">
+<div class="api"><span class="AS-keyword">enum</span> <span class="AS-enumtype">TextureAlignment_t</span>
+{
+	<span class="AS-enumvalue">TEXTURE_ALIGN_NONE</span> = <span class="AS-number">0</span>,
+	<span class="AS-enumvalue">TEXTURE_ALIGN_WORLD</span> = <span class="AS-number">1</span> &lt;&lt; <span class="AS-number">0</span>,
+	<span class="AS-enumvalue">TEXTURE_ALIGN_FACE</span> = <span class="AS-number">1</span> &lt;&lt; <span class="AS-number">1</span>
+}</div></div>
+</div><a name="___globalfunctions"></a><h1 name="global functions">Global Functions</h1>
+<div name="___globalfunctions"><a name="registerscriptsolid"></a><div class="block" name="registerscriptsolid">
+<div class="api"><span class="AS-keyword">void</span> RegisterScriptSolid(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span> name, <span class="AS-classtype">ScriptSolid</span>@ instance)</div></div>
+<a name="abs"></a><div class="block" name="abs">
+<div class="api"><span class="AS-keyword">float</span> abs(<span class="AS-keyword">float</span>)</div></div>
+<a name="acos"></a><div class="block" name="acos">
+<div class="api"><span class="AS-keyword">float</span> acos(<span class="AS-keyword">float</span>)</div></div>
+<a name="asin"></a><div class="block" name="asin">
+<div class="api"><span class="AS-keyword">float</span> asin(<span class="AS-keyword">float</span>)</div></div>
+<a name="atan"></a><div class="block" name="atan">
+<div class="api"><span class="AS-keyword">float</span> atan(<span class="AS-keyword">float</span>)</div></div>
+<a name="atan2"></a><div class="block" name="atan2">
+<div class="api"><span class="AS-keyword">float</span> atan2(<span class="AS-keyword">float</span>, <span class="AS-keyword">float</span>)</div></div>
+<a name="ceil"></a><div class="block" name="ceil">
+<div class="api"><span class="AS-keyword">float</span> ceil(<span class="AS-keyword">float</span>)</div></div>
+<a name="closeto"></a><div class="block" name="closeto">
+<div class="api"><span class="AS-keyword">bool</span> closeTo(<span class="AS-keyword">float</span>, <span class="AS-keyword">float</span>, <span class="AS-keyword">float</span> = <span class="AS-number">0</span>.<span class="AS-number">00001f</span>)</div></div>
+<a name="closeto"></a><div class="block" name="closeto">
+<div class="api"><span class="AS-keyword">bool</span> closeTo(<span class="AS-keyword">double</span>, <span class="AS-keyword">double</span>, <span class="AS-keyword">double</span> = <span class="AS-number">0</span>.<span class="AS-number">0000000001</span>)</div></div>
+<a name="cos"></a><div class="block" name="cos">
+<div class="api"><span class="AS-keyword">float</span> cos(<span class="AS-keyword">float</span>)</div></div>
+<a name="cosh"></a><div class="block" name="cosh">
+<div class="api"><span class="AS-keyword">float</span> cosh(<span class="AS-keyword">float</span>)</div></div>
+<a name="floor"></a><div class="block" name="floor">
+<div class="api"><span class="AS-keyword">float</span> floor(<span class="AS-keyword">float</span>)</div></div>
+<a name="fpfromieee"></a><div class="block" name="fpfromieee">
+<div class="api"><span class="AS-keyword">float</span> fpFromIEEE(<span class="AS-keyword">uint</span>)</div></div>
+<a name="fpfromieee"></a><div class="block" name="fpfromieee">
+<div class="api"><span class="AS-keyword">double</span> fpFromIEEE(<span class="AS-keyword">uint64</span>)</div></div>
+<a name="fptoieee"></a><div class="block" name="fptoieee">
+<div class="api"><span class="AS-keyword">uint</span> fpToIEEE(<span class="AS-keyword">float</span>)</div></div>
+<a name="fptoieee"></a><div class="block" name="fptoieee">
+<div class="api"><span class="AS-keyword">uint64</span> fpToIEEE(<span class="AS-keyword">double</span>)</div></div>
+<a name="fraction"></a><div class="block" name="fraction">
+<div class="api"><span class="AS-keyword">float</span> fraction(<span class="AS-keyword">float</span>)</div></div>
+<a name="getexceptioninfo"></a><div class="block" name="getexceptioninfo">
+<div class="api"><span class="AS-valuetype">string</span> getExceptionInfo()</div></div>
+<a name="join"></a><div class="block" name="join">
+<div class="api"><span class="AS-valuetype">string</span> join(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>[]&amp;<span class="AS-keyword">in</span>, <span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>)</div></div>
+<a name="log"></a><div class="block" name="log">
+<div class="api"><span class="AS-keyword">float</span> log(<span class="AS-keyword">float</span>)</div></div>
+<a name="log10"></a><div class="block" name="log10">
+<div class="api"><span class="AS-keyword">float</span> log10(<span class="AS-keyword">float</span>)</div></div>
+<a name="pow"></a><div class="block" name="pow">
+<div class="api"><span class="AS-keyword">float</span> pow(<span class="AS-keyword">float</span>, <span class="AS-keyword">float</span>)</div></div>
+<a name="print"></a><div class="block" name="print">
+<div class="api"><span class="AS-keyword">void</span> print(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>)</div></div>
+<a name="rint"></a><div class="block" name="rint">
+<div class="api"><span class="AS-keyword">float</span> rint(<span class="AS-keyword">float</span>)</div></div>
+<a name="sin"></a><div class="block" name="sin">
+<div class="api"><span class="AS-keyword">float</span> sin(<span class="AS-keyword">float</span>)</div></div>
+<a name="sinh"></a><div class="block" name="sinh">
+<div class="api"><span class="AS-keyword">float</span> sinh(<span class="AS-keyword">float</span>)</div></div>
+<a name="sqrt"></a><div class="block" name="sqrt">
+<div class="api"><span class="AS-keyword">float</span> sqrt(<span class="AS-keyword">float</span>)</div></div>
+<a name="tan"></a><div class="block" name="tan">
+<div class="api"><span class="AS-keyword">float</span> tan(<span class="AS-keyword">float</span>)</div></div>
+<a name="tanh"></a><div class="block" name="tanh">
+<div class="api"><span class="AS-keyword">float</span> tanh(<span class="AS-keyword">float</span>)</div></div>
+<a name="throw"></a><div class="block" name="throw">
+<div class="api"><span class="AS-keyword">void</span> throw(<span class="AS-keyword">const</span> <span class="AS-valuetype">string</span>&amp;<span class="AS-keyword">in</span>)</div></div>
+</div><a name="___globalproperties"></a><h1 name="global properties">Global Properties</h1>
+<div name="___globalproperties"><a name="vec3_angle"></a><div class="block" name="vec3_angle">
+<div class="api"><span class="AS-keyword">const</span> <span class="AS-valuetype">QAngle</span> vec3_angle</div></div>
+<a name="vec3_invalid"></a><div class="block" name="vec3_invalid">
+<div class="api"><span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span> vec3_invalid</div></div>
+<a name="vec3_origin"></a><div class="block" name="vec3_origin">
+<div class="api"><span class="AS-keyword">const</span> <span class="AS-valuetype">Vector</span> vec3_origin</div></div>
+<a name="vec4_origin"></a><div class="block" name="vec4_origin">
+<div class="api"><span class="AS-keyword">const</span> <span class="AS-valuetype">Vector4D</span> vec4_origin</div></div>
+</div></div>
+</body>
+</html>

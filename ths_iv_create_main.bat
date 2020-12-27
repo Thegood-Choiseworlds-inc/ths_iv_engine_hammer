@@ -1,0 +1,1 @@
+@devtools\bin\vpc.exe +iv_hammer /slngroups groups.vdf /mksln iv_hammer.sln

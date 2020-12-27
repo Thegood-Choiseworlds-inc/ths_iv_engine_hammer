@@ -1,0 +1,42 @@
+//-----------------------------------------------------------------------------
+//	IV_HAMMER_LAUNCHER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\bin"
+$Macro OUTBINNAME	"hammer"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalOptions					"$BASE /EHa"
+	}
+
+	$Linker [$WIN32]
+	{
+		$EnableLargeAddresses				"Support Addresses Larger Than 2 Gigabytes (/LARGEADDRESSAWARE)"
+	}
+}
+
+$Project "iv_hammer_launcher"
+{
+	$Folder	"Source Files"
+	{
+		$File	"main.cpp"
+	}
+
+	$Folder "Resources"
+	{
+		$File	"hammer_launcher.rc"
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+	}
+}

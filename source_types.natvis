@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="Color">
+    <DisplayString>{{ r = {(int)_color[0]}, g = {(int)_color[1]}, b = {(int)_color[2]}, a = {(int)_color[3]} }}</DisplayString>
+    <Expand>
+      <Item Name="[r]">(int)_color[0]</Item>
+      <Item Name="[g]">(int)_color[1]</Item>
+      <Item Name="[b]">(int)_color[2]</Item>
+      <Item Name="[a]">(int)_color[3]</Item>
+    </Expand>
+  </Type>
+  <Type Name="color32_s">
+    <DisplayString>{{ r = {(int)r}, g = {(int)g}, b = {(int)b}, a = {(int)a} }}</DisplayString>
+    <Expand>
+      <Item Name="[r]">(int)r</Item>
+      <Item Name="[g]">(int)g</Item>
+      <Item Name="[b]">(int)b</Item>
+      <Item Name="[a]">(int)a</Item>
+    </Expand>
+  </Type>
+  <Type Name="Vector">
+    <DisplayString>{{ x = {x}, y = {y}, z = {z} }}</DisplayString>
+  </Type>
+  <Type Name="Vector2D">
+    <DisplayString>{{ x = {x}, y = {y} }}</DisplayString>
+  </Type>
+  <Type Name="Vector4D">
+    <DisplayString>{{ x = {x}, y = {y}, z = {z}, w = {w} }}</DisplayString>
+  </Type>
+  <Type Name="QAngle">
+    <DisplayString>{{ x = {x}, y = {y}, z = {z} }}</DisplayString>
+  </Type>
+  <Type Name="RadianEuler">
+    <DisplayString>{{ degrees = {x*57.29578} {y*57.29578} {z*57.29578} }}</DisplayString>
+  </Type>
+  <Type Name="CUtlVector&lt;*, CUtlMemory&lt;*&gt;&gt;" Inheritable="true">
+    <DisplayString>{{ size = {m_Size} }}</DisplayString>
+    <Expand>
+      <Item Name="[size]">m_Size</Item>
+      <Item Name="[allocated]">m_Memory.m_nAllocationCount</Item>
+      <ArrayItems>
+        <Size>m_Size</Size>
+        <ValuePointer>m_Memory.m_pMemory</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="CUtlBlockVector&lt;*&gt;" Inheritable="true">
+    <DisplayString>{{ size = {m_Size} }}</DisplayString>
+    <Expand>
+      <Item Name="[size]">m_Size</Item>
+      <Item Name="[allocated]">m_Memory.m_nBlocks * (m_Memory.m_nIndexMask + 1)</Item>
+      <IndexListItems>
+        <Size>m_Size</Size>
+        <ValueNode>m_Memory.m_pMemory[$i &gt;&gt; m_Memory.m_nIndexShift][$i &amp; m_Memory.m_nIndexMask]</ValueNode>
+      </IndexListItems>
+    </Expand>
+  </Type>
+  <Type Name="SendProp">
+    <DisplayString>{m_pVarName,s}</DisplayString>
+  </Type>
+  <Type Name="RecvProp">
+    <DisplayString>{m_pVarName,s}</DisplayString>
+  </Type>
+  <Type Name="SendTable">
+    <DisplayString>{m_pNetTableName,s}</DisplayString>
+  </Type>
+  <Type Name="RecvTable">
+    <DisplayString>{m_pNetTableName,s}</DisplayString>
+  </Type>
+  <Type Name="CNetworkVarBase&lt;*&gt;" Inheritable="true">
+    <DisplayString>{m_Value}</DisplayString>
+  </Type>
+  <Type Name="CNetworkColor32Base&lt;*&gt;" Inheritable="true">
+    <DisplayString>{m_Value}</DisplayString>
+  </Type>
+  <Type Name="CNetworkHandleBase&lt;*&gt;" Inheritable="true">
+    <DisplayString>{m_Value}</DisplayString>
+  </Type>
+  <Type Name="CNetworkVectorBase&lt;*&gt;" Inheritable="true">
+    <DisplayString>{{ x = {m_Value.x}, y = {m_Value.y}, z = {m_Value.z} }}</DisplayString>
+  </Type>
+  <Type Name="CBaseHandle">
+    <DisplayString>{{ index = {m_Index&amp;4093}, serial={m_Index>>12} }}</DisplayString>
+  </Type>
+  <Type Name="CGameTrace">
+    <DisplayString>{{ fraction {fraction}, start {startpos.x} {startpos.y} {startpos.z}, end {endpos.x} {endpos.y} {endpos.z} }}</DisplayString>
+  </Type>
+  <Type Name="ConVar">
+    <DisplayString>{{ name = {m_pParent->m_pszName,s}, value = {m_pParent->m_pszString,s} }}</DisplayString>
+    <Expand>
+      <Item Name="[value]" Condition="(m_pParent->m_nFlags &amp; (1 &lt;&lt; 12)) == 0">m_pParent->m_pszString,s</Item>
+      <Item Name="[value]" Condition="(m_pParent->m_nFlags &amp; (1 &lt;&lt; 12)) != 0">m_pParent->m_nValue</Item>
+      <Item Name="[default]">m_pParent->m_pszDefaultValue,s</Item>
+      <Item Name="[flags]">m_pParent->m_nFlags</Item>
+      <Item Name="[callback]" Condition="m_pParent->m_fnChangeCallback != nullptr">m_pParent->m_fnChangeCallback</Item>
+      <Item Name="[min]" Condition="m_pParent->m_bHasMin">m_pParent->m_fMinVal</Item>
+      <Item Name="[max]" Condition="m_pParent->m_bHasMax">m_pParent->m_fMaxVal</Item>
+    </Expand>
+  </Type>
+  <Type Name="ConVarRef">
+    <DisplayString>{{ name = {m_pConVarState->m_pszName,s}, value = {m_pConVarState->m_pszString,s} }}</DisplayString>
+    <Expand>
+      <ExpandedItem>m_pConVarState,na</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="CSteamID">
+    <DisplayString>{{ id = { m_steamid.m_unAll64Bits } type = { m_steamid.m_comp.m_EAccountType } }}</DisplayString>
+  </Type>
+  <Type Name="IGameEvent">
+    <Expand>
+      <Item Name="KeyValues">*(KeyValues**)(((unsigned char*)(this))+8),na</Item>
+    </Expand>
+  </Type>
+  <Type Name="CUtlString">
+    <DisplayString>{m_pString,s}</DisplayString>
+    <StringView>m_pString</StringView>
+  </Type>
+  <Type Name="CUtlRBTree&lt;*,*,*,*&gt;">
+    <DisplayString>{{size = {m_NumElements}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">m_NumElements</Item>
+      <CustomListItems>
+        <Variable Name="i" InitialValue="0"></Variable>
+        <Size>m_NumElements</Size>
+        <Loop>
+          <Item Condition="m_Elements.m_pMemory[i].m_Left != i">m_Elements.m_pMemory[i].m_Data,na</Item>
+          <Exec>i++</Exec>
+          <Break Condition="i &gt;= m_Elements.m_nAllocationCount"/>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+  <Type Name="CUtlMap&lt;*,*,*&gt;" Inheritable="true">
+    <DisplayString>{{size = {m_Tree.m_NumElements}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">m_Tree.m_NumElements</Item>
+      <CustomListItems>
+        <Variable Name="i" InitialValue="0"/>
+        <Size>m_Tree.m_NumElements</Size>
+        <Loop>
+          <Item Condition="m_Tree.m_Elements.m_pMemory[i].m_Left != i" Name="[{m_Tree.m_Elements.m_pMemory[i].m_Data.key,na}]">m_Tree.m_Elements.m_pMemory[i].m_Data.elem,na</Item>
+          <Exec>i++</Exec>
+          <Break Condition="i &gt;= m_Tree.m_Elements.m_nAllocationCount"/>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+  <Type Name="CUtlDict&lt;*,*&gt;" Inheritable="true">
+    <DisplayString>{{size = {m_Elements.m_Tree.m_NumElements}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">m_Elements.m_Tree.m_NumElements</Item>
+      <CustomListItems>
+        <Variable Name="i" InitialValue="0"/>
+        <Size>m_Elements.m_Tree.m_NumElements</Size>
+        <Loop>
+          <Item Condition="m_Elements.m_Tree.m_Elements.m_pMemory[i].m_Left != i">m_Elements.m_Tree.m_Elements.m_pMemory[i].m_Data.elem,na</Item>
+          <Exec>i++</Exec>
+          <Break Condition="i &gt;= m_Elements.m_Tree.m_Elements.m_nAllocationCount"/>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+  <Type Name="CUtlLinkedList&lt;*,*,*,*,*&gt;" Inheritable="true">
+    <DisplayString>{{size = {m_ElementCount}}}</DisplayString>
+    <Expand>
+      <Item Name="[size]">m_ElementCount</Item>
+      <Item Name="[allocated]">m_NumAlloced</Item>
+      <CustomListItems>
+        <Variable Name="i" InitialValue="m_Head"/>
+        <Size>m_ElementCount</Size>
+        <Loop>
+          <Item>m_Memory.m_pMemory[i].m_Element, na</Item>
+          <Exec>i = m_Memory.m_pMemory[i].m_Next</Exec>
+          <Break Condition="i == m_Memory.INVALID_INDEX"/>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+  <Type Name="KeyValues">
+    <DisplayString Condition="m_iDataType == TYPE_NONE">{{name = {s_pfGetStringForSymbol( m_iKeyName ),s}}}</DisplayString>
+    <DisplayString Condition="m_iDataType == TYPE_STRING">{{name = {s_pfGetStringForSymbol( m_iKeyName ),s} value={m_sValue,s}}}</DisplayString>
+    <DisplayString Condition="m_iDataType == TYPE_INT">{{name = {s_pfGetStringForSymbol( m_iKeyName ),s} value={m_iValue}}}</DisplayString>
+    <DisplayString Condition="m_iDataType == TYPE_FLOAT">{{name = {s_pfGetStringForSymbol( m_iKeyName ),s} value={m_flValue}}}</DisplayString>
+    <DisplayString Condition="m_iDataType == TYPE_PTR">{{name = {s_pfGetStringForSymbol( m_iKeyName ),s} value={m_pValue}}}</DisplayString>
+    <DisplayString Condition="m_iDataType == TYPE_WSTRING">{{name = {s_pfGetStringForSymbol( m_iKeyName ),s} value={m_wsValue,su}}}</DisplayString>
+    <DisplayString Condition="m_iDataType == TYPE_COLOR">{{name = {s_pfGetStringForSymbol( m_iKeyName ),s} value={*(Color*)&amp;m_Color}}}</DisplayString>
+    <DisplayString Condition="m_iDataType == TYPE_UINT64">{{name = {s_pfGetStringForSymbol( m_iKeyName ),s} value={*(unsigned long long*)m_sValue}}}</DisplayString>
+    <Expand>
+      <Item Name="[peer]" Condition="m_pPeer != nullptr">m_pPeer</Item>
+      <Item Name="[chain]" Condition="m_pChain != nullptr">m_pChain</Item>
+      <Synthetic Name="[value]" Condition="m_iDataType == TYPE_NONE &amp;&amp; m_pSub == nullptr">
+        <DisplayString>[empty]</DisplayString>
+      </Synthetic>
+      <Item Name="[value]" Condition="m_iDataType == TYPE_NONE &amp;&amp; m_pSub != nullptr">m_pSub</Item>
+      <Item Name="[value]" Condition="m_iDataType == TYPE_STRING">m_sValue,s</Item>
+      <Item Name="[value]" Condition="m_iDataType == TYPE_INT">m_iValue</Item>
+      <Item Name="[value]" Condition="m_iDataType == TYPE_FLOAT">m_flValue</Item>
+      <Item Name="[value]" Condition="m_iDataType == TYPE_PTR">m_pValue</Item>
+      <Item Name="[value]" Condition="m_iDataType == TYPE_WSTRING">m_wsValue,su</Item>
+      <Item Name="[value]" Condition="m_iDataType == TYPE_COLOR">*(Color*)&amp;m_Color</Item>
+      <Item Name="[value]" Condition="m_iDataType == TYPE_UINT64">*(unsigned long long*)m_sValue</Item>
+    </Expand>
+  </Type>
+  <Type Name="CUtlReference&lt;*&gt;">
+    <SmartPointer Usage="Full">m_pObject</SmartPointer>
+  </Type>
+  <Type Name="WCKVBase_Dict" Inheritable="true">
+    <Expand>
+      <ExpandedItem>m_KeyValues,na</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="WCKVBase_Vector" Inheritable="true">
+    <Expand>
+      <ExpandedItem>m_KeyValues,na</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="MDkeyvalue">
+    <DisplayString>{{ key = {szKey,s}, value = {szValue,s} }}</DisplayString>
+    <Expand>
+      <Item Name="[key]">szKey,s</Item>
+      <Item Name="[value]">szValue,s</Item>
+    </Expand>
+  </Type>
+  <Type Name="CHelperInfo">
+    <DisplayString>{{ name = {m_szName,s} }}</DisplayString>
+    <Expand>
+      <Item Name="[name]">m_szName,s</Item>
+      <Item Name="[params]">m_Parameters</Item>
+    </Expand>
+  </Type>
+  <Type Name="CClassInputOutputBase" Inheritable="true">
+    <DisplayString>{{ name = {m_szName,s}, type = {m_eType,en} }}</DisplayString>
+    <Expand>
+      <Item Name="[name]">m_szName,s</Item>
+      <Item Name="[type]">m_eType,en</Item>
+      <Item Name="[description]" Condition="m_pszDescription != nullptr">m_pszDescription,s</Item>
+    </Expand>
+  </Type>
+  <Type Name="GDIVITEM">
+    <DisplayString Condition="iValue &gt; 0">{{ name = {szCaption,s}, value = {iValue} }}</DisplayString>
+    <DisplayString Condition="iValue == 0">{{ name = {szCaption,s}, value = {szValue,s} }}</DisplayString>
+    <Expand>
+      <Item Name="[value]" Condition="iValue &gt; 0">iValue</Item>
+      <Item Name="[value]" Condition="iValue == 0">szValue,s</Item>
+      <Item Name="[name]">szCaption,s</Item>
+      <Item Name="[default]" Condition="bDefault">(bool)bDefault</Item>
+    </Expand>
+  </Type>
+  <Type Name="GDinputvariable">
+    <DisplayString>{{ name = {m_szName,s}, type = {m_eType,en} }}</DisplayString>
+    <Expand>
+      <Item Name="[name]">m_szName,s</Item>
+      <Item Name="[long name]">m_szLongName,s</Item>
+      <Item Name="[description]" Condition="m_pszDescription != nullptr">m_pszDescription,s</Item>
+      <Item Name="[type]">m_eType,en</Item>
+      <Item Name="[reportable]" Condition="m_bReportable">m_bReportable</Item>
+      <Item Name="[readonly]" Condition="m_bReadOnly">m_bReadOnly</Item>
+      <Item Name="[default]" Condition="m_eType == ivFlags || m_eType == ivInteger || m_eType == ivNodeDest || m_eType == ivNodeID">m_nDefault</Item>
+      <Item Name="[default]" Condition="!(m_eType == ivFlags || m_eType == ivInteger || m_eType == ivNodeDest || m_eType == ivNodeID)">m_szDefault,s</Item>
+      <Item Name="[value]" Condition="m_eType == ivFlags || m_eType == ivInteger || m_eType == ivNodeDest || m_eType == ivNodeID">m_nValue</Item>
+      <Item Name="[value]" Condition="!(m_eType == ivFlags || m_eType == ivInteger || m_eType == ivNodeDest || m_eType == ivNodeID)">m_szValue,s</Item>
+      <Item Name="[items]" Condition="m_Items.m_Size &gt; 0">m_Items</Item>
+    </Expand>
+  </Type>
+  <Type Name="GDclass">
+    <DisplayString>{{ name = {m_szName,s} }}</DisplayString>
+    <Expand>
+      <Item Name="[name]">m_szName,s</Item>
+      <Item Name="[description]" Condition="m_pszDescription != nullptr">m_pszDescription,s</Item>
+      <Item Name="[bases]" Condition="m_Bases.m_Size &gt; 0">m_Bases</Item>
+      <Synthetic Name="[flags]" Condition="m_bBase || m_bSolid || m_bModel || m_bMove || m_bKeyFrame || m_bPoint || m_bFilter || m_bHalfGridSnap">
+        <DisplayString>{{ base = {m_bBase}, solid = {m_bSolid}, point = {m_bPoint}, model = {m_bModel} }}</DisplayString>
+        <Expand>
+          <Item Name="[base]" Condition="m_bBase">m_bBase</Item>
+          <Item Name="[solid]" Condition="m_bSolid">m_bSolid</Item>
+          <Item Name="[model]" Condition="m_bModel">m_bModel</Item>
+          <Item Name="[move]" Condition="m_bMove">m_bMove</Item>
+          <Item Name="[keyframe]" Condition="m_bKeyFrame">m_bKeyFrame</Item>
+          <Item Name="[point]" Condition="m_bPoint">m_bPoint</Item>
+          <Item Name="[filter]" Condition="m_bFilter">m_bFilter</Item>
+          <Item Name="[half snap]" Condition="m_bHalfGridSnap">m_bHalfGridSnap</Item>
+        </Expand>
+      </Synthetic>
+      <Item Name="[mins]" Condition="m_bGotSize">m_bmins</Item>
+      <Item Name="[maxs]" Condition="m_bGotSize">m_bmaxs</Item>
+      <Item Name="[color]" Condition="m_bGotColor">m_rgbColor,na</Item>
+      <Item Name="[variables]" Condition="m_Variables.m_Size &gt; 0">m_Variables</Item>
+      <Item Name="[helpers]" Condition="m_Helpers.m_Size &gt; 0">m_Helpers</Item>
+      <Item Name="[inputs]" Condition="m_Inputs.m_Size &gt; 0">m_Inputs</Item>
+      <Item Name="[outputs]" Condition="m_Outputs.m_Size &gt; 0">m_Outputs</Item>
+    </Expand>
+  </Type>
+  <Type Name="CEditGameClass" Inheritable="true">
+    <DisplayString>{{ class = {m_szClass,s} }}</DisplayString>
+    <Expand>
+      <Item Name="[class name]">m_szClass,s</Item>
+      <Item Name="[comments]" Condition="m_pszComments != nullptr">m_pszComments,s</Item>
+      <Item Name="[class]">m_pClass,na</Item>
+      <Item Name="[kv]">m_KeyValues</Item>
+      <Item Name="[connections]" Condition="m_Connections.m_Size &gt; 0">m_Connections</Item>
+      <Item Name="[upstream]" Condition="m_Upstream.m_Size &gt; 0">m_Upstream</Item>
+    </Expand>
+  </Type>
+  <Type Name="CVisGroup">
+    <DisplayString>{{ name = {m_szName,s}, id = {m_dwID}, state = {m_eVisible,en} }}</DisplayString>
+    <Expand>
+      <Item Name="[auto]" Condition="m_bIsAuto">m_bIsAuto</Item>
+      <Item Name="[parent]" Condition="m_pParent != nullptr">m_pParent</Item>
+      <Item Name="[state]">m_eVisible,en</Item>
+      <Item Name="[id]">m_dwID</Item>
+      <Item Name="[children]" Condition="m_Children.m_Size &gt; 0">m_Children</Item>
+      <Item Name="[color]">m_rgbColor</Item>
+    </Expand>
+  </Type>
+  <Type Name="BoundBox">
+    <DisplayString>{{ mins = {bmins}, maxs = {bmaxs} }}</DisplayString>
+    <Expand>
+      <Item Name="[mins]">bmins</Item>
+      <Item Name="[maxs]">bmaxs</Item>
+    </Expand>
+  </Type>
+  <Type Name="CMapClass" Inheritable="true" ExcludeView="CMapCls">
+    <DisplayString>{{ id = {m_nID} }}</DisplayString>
+    <Expand>
+      <Item Name="[id]">m_nID</Item>
+      <Item Name="[temporary]" Condition="m_bTemporary">m_bTemporary</Item>
+      <Item Name="[visible]">m_bVisible</Item>
+      <Item Name="[visible 2d]">m_bVisible2D</Item>
+      <Item Name="[visible vis]">m_bVisGroupShown</Item>
+      <Item Name="[visgroup auto]" Condition="m_bVisGroupAutoShown">m_bVisGroupAutoShown</Item>
+      <Item Name="[visgroups]" Condition="m_VisGroups.m_List.m_Size &gt; 0">m_VisGroups.m_List</Item>
+      <Item Name="[children]" Condition="m_Children.m_Size &gt; 0">m_Children</Item>
+      <Item Name="[dependents]" Condition="m_Dependents.m_Size &gt; 0">m_Dependents</Item>
+      <Item Name="[cull box]">m_CullBox</Item>
+      <Item Name="[bound box]">m_BoundingBox</Item>
+      <Item Name="[render 2d box]">m_Render2DBox</Item>
+      <Item Name="[color visgroup]" Condition="m_pColorVisGroup != nullptr">m_pColorVisGroup</Item>
+      <Item Name="[editor keys]" Condition="m_pEditorKeys != nullptr">m_pEditorKeys</Item>
+    </Expand>
+  </Type>
+  <Type Name="CMapEntity" Inheritable="true" ExcludeView="CMapEnt;CMapCls">
+    <DisplayString>{{ class = {m_szClass,s}, id = {m_nID} }}</DisplayString>
+    <Expand>
+      <Item Name="[type]" Optional="true">__Type,s</Item>
+      <Item Name="CMapClass">(CMapClass*)this,view(CMapEnt)na</Item>
+      <Item Name="CEditGameClass">(CEditGameClass*)this,view(CMapCls)na</Item>
+    </Expand>
+  </Type>
+  <Type Name="CHistory">
+    <DisplayString Condition="bUndo">Undo</DisplayString>
+    <DisplayString>Redo</DisplayString>
+    <Expand>
+      <Item Name="[paused]">(bool)bPaused</Item>
+      <Item Name="[active]">(bool)m_bActive</Item>
+      <Item Name="[size]">uDataSize</Item>
+      <Item Name="[current]">CurTrack</Item>
+      <Item Name="[tracks]">Tracks</Item>
+    </Expand>
+  </Type>
+  <Type Name="CHistoryTrack">
+    <DisplayString>{{ name = {szName,s}, id = {dwID}, size = {uDataSize} }}</DisplayString>
+    <Expand>
+      <Item Name="[name]">szName,s</Item>
+      <Item Name="[id]">dwID</Item>
+      <Item Name="[auto destruct]">m_bAutoDestruct</Item>
+      <Item Name="[size]">uDataSize</Item>
+      <Item Name="[selected]">Selected</Item>
+      <Item Name="[items]">Data</Item>
+    </Expand>
+  </Type>
+  <Type Name="CTrackEntry">
+    <DisplayString>{{ type = {m_eType,en}, size = {m_nDataSize} }}</DisplayString>
+    <Expand>
+      <Item Name="[type]">m_eType,en</Item>
+      <Item Name="[size]">m_nDataSize</Item>
+      <Item Name="[keep children]">m_bKeptChildren</Item>
+      <Item Name="[undone]">m_bUndone</Item>
+      <Synthetic Name="[copy]" Condition="m_eType == ttCopy">
+        <DisplayString>{{ current = {m_Copy.pCurrent}, kept = {m_Copy.pKeptObject} }}</DisplayString>
+        <Expand>
+          <Item Name="[current]">m_Copy.pCurrent</Item>
+          <Item Name="[kept]">m_Copy.pKeptObject</Item>
+        </Expand>
+      </Synthetic>
+      <Synthetic Name="[delete]" Condition="m_eType == ttDelete">
+        <DisplayString>{{ deleted = {m_Delete.pDeleted}, kept = {m_Delete.pKeptParent} }}</DisplayString>
+        <Expand>
+          <Item Name="[deleted]">m_Delete.pDeleted</Item>
+          <Item Name="[kept]">m_Delete.pKeptParent</Item>
+        </Expand>
+      </Synthetic>
+      <Synthetic Name="[create]" Condition="m_eType == ttCreate">
+        <DisplayString>{{ created = {m_Create.pCreated} }}</DisplayString>
+        <Expand>
+          <Item Name="[created]">m_Create.pCreated</Item>
+        </Expand>
+      </Synthetic>
+      <Synthetic Name="[create]" Condition="m_eType == ttQuickHide">
+        <DisplayString>{{ qh = {m_QuickHide.QuickHideGroup}, qh_parents = {m_QuickHide.QuickHideGroupedParents} }}</DisplayString>
+        <Expand>
+          <Item Name="[quickhide]">m_QuickHide.QuickHideGroup</Item>
+          <Item Name="[quickhide parents]">m_QuickHide.QuickHideGroupedParents</Item>
+        </Expand>
+      </Synthetic>
+    </Expand>
+  </Type>
+</AutoVisualizer>

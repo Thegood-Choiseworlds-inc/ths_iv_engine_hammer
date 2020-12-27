@@ -1,0 +1,85 @@
+//-----------------------------------------------------------------------------
+//	game_shader_dx9.vpc
+//
+//	Project Script for mods to use an an example of how to override shaders
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\bin\hammer\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Linker
+	{
+		$EnableLargeAddresses				"Support Addresses Larger Than 2 Gigabytes (/LARGEADDRESSAWARE)" [$WIN32]
+	}
+}
+
+$Configuration	"Debug"
+{
+	$General
+	{
+		$OutputDirectory		"Debug_dx9"			[$WIN32]
+		$IntermediateDirectory	"Debug_dx9"			[$WIN32]
+	}
+}
+
+$Configuration	"Release"
+{
+	$General
+	{
+		$OutputDirectory		"Release_dx9"		[$WIN32]
+		$IntermediateDirectory	"Release_dx9"		[$WIN32]
+	}
+}
+
+// Common Configuration
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;include;"
+		$PreprocessorDefinitions		"$BASE;STDSHADER_DX9_DLL_EXPORT;FAST_MATERIALVAR_ACCESS;GAME_SHADER_DLL"
+		$PreprocessorDefinitions		"$BASE;USE_ACTUAL_DX" [($WIN32||$X360) && !$GL]
+	}
+}
+
+$Project "Shaders (Hammer)"
+{
+	$Folder	"Source Files"
+	{
+		$Folder "ShaderLib"
+		{
+			$File "BaseShader.cpp"
+			$File "ShaderDLL.cpp"
+			$File "ShaderlibCvar.cpp"
+			$File "IShaderSystem.h"
+			$File "ShaderDLL_Global.h"
+			$File "ShaderlibCvar.h"
+		}
+
+		$File	"screenspace_special.cpp"
+		$File	"sprite_dx9.cpp"
+		$File	"shader_dll_verify.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"common_fxc.h"
+		$File	"common_hlsl_cpp_consts.h"
+		$File	"common_ps_fxc.h"
+		$File	"common_vs_fxc.h"
+	}
+
+	$Folder "Shader Headers"
+	{
+		$FilePattern "include\*.inc"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib	mathlib
+	}
+}
