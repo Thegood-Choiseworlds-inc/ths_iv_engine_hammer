@@ -3,17 +3,21 @@
 #include "common_ps_fxc.h"
 
 sampler AlbedoSampler	: register( s0 );
-sampler NormalSampler	: register( s1 );
-sampler PositionSampler	: register( s2 );
+sampler NormalSampler   : register( s1 );
+sampler PositionSampler : register( s2 );
 
 
 struct PS_INPUT
 {
-	float4 lightColor_InnerCos	: TEXCOORD0;
-	float4 lightDir_OuterCos	: TEXCOORD1;
-	float3 lightOrigin			: TEXCOORD2;
-	float4 attnInfo				: TEXCOORD3;
-	float3 SampleXYW			: TEXCOORD4;
+	float2 texCoord				: TEXCOORD0;
+	float4 lightColor_InnerCos : TEXCOORD1;
+	float4 lightDir_OuterCos    : TEXCOORD2;
+	float3 lightOrigin          : TEXCOORD3;
+	float4 attnInfo             : TEXCOORD4;
+	float3 SampleXYW            : TEXCOORD5;
+	float3 col : TEXCOORD6;
+
+
 };
 
 #define INNER_COS (i.lightColor_InnerCos.w)
@@ -24,15 +28,19 @@ struct PS_INPUT
 #define CONSTANT_ATTN ( i.attnInfo.z )
 #define SCALE_FACTOR ( i.attnInfo.w )
 
+
 float Lerp5( float f1, float f2, float i1, float i2, float x )
 {
 	return f1 + ( f2 - f1 ) * ( x - i1 ) / ( i2 - i1 );
 }
 
+
 float4 main( PS_INPUT i ) : COLOR
 {
 	// figure out screen sample location
-	float2 sampleUV = i.SampleXYW.xy;
+	float ooW = 1.0 / i.SampleXYW.z;
+
+	float2 sampleUV = i.SampleXYW.xy * ooW;
 
 	float4 normal = tex2D( NormalSampler, sampleUV );
 	float4 albedo = tex2D( AlbedoSampler, sampleUV );
@@ -57,5 +65,6 @@ float4 main( PS_INPUT i ) : COLOR
 	else
 		dist_falloff = min( 1, dist_falloff );
 	ret *= dist_falloff;
+//	ret += 0.1 * i.col; 
 	return FinalOutput( float4( ret, 1 ), 0, PIXEL_FOG_TYPE_NONE, TONEMAP_SCALE_NONE );
 }
