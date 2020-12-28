@@ -1644,7 +1644,7 @@ bool CMaterial::Initialize( HWND hwnd )
 
 		CSysModule* module = nullptr;
 		ILoadShader* load = nullptr;
-		Sys_LoadInterface( "hammer/bin/hammer_shader_dx9.dll", "ILoadShaderDll001", &module, reinterpret_cast<void**>( &load ) );
+		Sys_LoadInterface( "hammer/bin/iv_shader_system_main.dll", "ILoadShaderDll001", &module, reinterpret_cast<void**>( &load ) );
 
 		for ( const char* name = g_pFullFileSystem->FindFirstEx( gameDir, nullptr, &find ); name; name = g_pFullFileSystem->FindNext( find ) )
 		{
@@ -1662,7 +1662,7 @@ bool CMaterial::Initialize( HWND hwnd )
 		g_pFullFileSystem->FindClose( find );
 
 		g_pFullFileSystem->AddSearchPath( "hammer", "GAME" );
-		shaderSystem->LoadShaderDLL( "hammer/bin/hammer_shader_dx9.dll" );
+		shaderSystem->LoadShaderDLL( "hammer/bin/iv_shader_system_main.dll" );
 
 		Sys_UnloadModule( module ); // decrement ref
 	}
