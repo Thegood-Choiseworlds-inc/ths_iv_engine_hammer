@@ -37,25 +37,35 @@
 //-----------------------------------------------------------------------------
 // Global interfaces
 //-----------------------------------------------------------------------------
-extern IMaterialSystemHardwareConfig* g_pHardwareConfig;
-extern const MaterialSystem_Config_t* g_pConfig;
+extern IMaterialSystemHardwareConfig *g_pHardwareConfig;
+extern const MaterialSystem_Config_t *g_pConfig;
+extern bool g_shaderConfigDumpEnable;
 
 // Helper method
 bool IsUsingGraphics();
 
+#define SOFTWARE_VERTEX_SHADER(name)			\
+	static void SoftwareVertexShader_ ## name( CMeshBuilder &meshBuilder, IMaterialVar **params, IShaderDynamicAPI* pShaderAPI )
+
+#define FORWARD_DECLARE_SOFTWARE_VERTEX_SHADER(name)\
+	static void SoftwareVertexShader_ ## name( CMeshBuilder &meshBuilder, IMaterialVar **params, IShaderDynamicAPI* pShaderAPI );
+
+#define USE_SOFTWARE_VERTEX_SHADER(name) \
+	m_SoftwareVertexShader = SoftwareVertexShader_ ## name
+
 #define SHADER_INIT_PARAMS()			\
-	void OnInitShaderParams( IMaterialVar** params, const char* pMaterialName ) override
+	virtual void OnInitShaderParams( IMaterialVar **params, const char *pMaterialName )
 
 #define SHADER_FALLBACK			\
-	char const* GetFallbackShader( IMaterialVar** params ) const override
+	virtual char const* GetFallbackShader( IMaterialVar** params ) const
 
 // Typesafe flag setting
-inline void CShader_SetFlags( IMaterialVar** params, MaterialVarFlags_t _flag )
+inline void CShader_SetFlags( IMaterialVar **params, MaterialVarFlags_t _flag )
 {
 	params[FLAGS]->SetIntValue( params[FLAGS]->GetIntValue() | (_flag) );
 }
 
-inline bool CShader_IsFlagSet( IMaterialVar** params, MaterialVarFlags_t _flag )
+inline bool CShader_IsFlagSet( IMaterialVar **params, MaterialVarFlags_t _flag )
 {
 	return ((params[FLAGS]->GetIntValue() & (_flag) ) != 0);
 }
@@ -111,15 +121,16 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 	namespace name \
 	{\
 		typedef _baseclass CBaseClass;\
-		static const char* s_Name = #name; \
+		static const char *s_HelpString = help; \
+		static const char *s_Name = #name; \
 		static int s_nFlags = flags; \
 		class CShaderParam;\
-		static CUtlVector<CShaderParam*> s_ShaderParams;\
-		static CShaderParam* s_pShaderParamOverrides[NUM_SHADER_MATERIAL_VARS] = { nullptr };\
+		static CUtlVector<CShaderParam *> s_ShaderParams;\
+		static CShaderParam *s_pShaderParamOverrides[NUM_SHADER_MATERIAL_VARS];\
 		class CShaderParam\
 		{\
 		public:\
-			CShaderParam( ShaderMaterialVars_t var, ShaderParamType_t type, const char *pDefaultParam, const char* pHelp, int nFlags )\
+			CShaderParam( ShaderMaterialVars_t var, ShaderParamType_t type, const char *pDefaultParam, const char *pHelp, int nFlags )\
 			{\
 				m_Info.m_pName = "override";\
 				m_Info.m_Type = type;\
@@ -130,7 +141,7 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 				s_pShaderParamOverrides[var] = this;\
 				m_Index = var;\
 			}\
-			CShaderParam( const char* pName, ShaderParamType_t type, const char* pDefaultParam, const char* pHelp, int nFlags )\
+			CShaderParam( const char *pName, ShaderParamType_t type, const char *pDefaultParam, const char *pHelp, int nFlags )\
 			{\
 				m_Info.m_pName = pName;\
 				m_Info.m_Type = type;\
@@ -140,19 +151,19 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 				m_Index = NUM_SHADER_MATERIAL_VARS + s_ShaderParams.Count();\
 				s_ShaderParams.AddToTail( this );\
 			}\
-			operator int() const \
+			operator int()	\
 			{\
 				return m_Index;\
 			}\
-			const char* GetName() const\
+			const char *GetName()\
 			{\
 				return m_Info.m_pName;\
 			}\
-			ShaderParamType_t GetType() const\
+			ShaderParamType_t GetType()\
 			{\
 				return m_Info.m_Type;\
 			}\
-			const char* GetDefault() const\
+			const char *GetDefault()\
 			{\
 				return m_Info.m_pDefaultValue;\
 			}\
@@ -160,7 +171,7 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 			{\
 				return m_Info.m_nFlags;\
 			}\
-			const char* GetHelp() const\
+			const char *GetHelp()\
 			{\
 				return m_Info.m_pHelp;\
 			}\
@@ -175,13 +186,13 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 #define BEGIN_SHADER_PARAMS
 
 #define SHADER_PARAM( param, paramtype, paramdefault, paramhelp ) \
-	static const CShaderParam param( "$" #param, paramtype, paramdefault, paramhelp, 0 );
+	static CShaderParam param( "$" #param, paramtype, paramdefault, paramhelp, 0 );
 
 #define SHADER_PARAM_FLAGS( param, paramtype, paramdefault, paramhelp, flags ) \
-	static const CShaderParam param( "$" #param, paramtype, paramdefault, paramhelp, flags );
+	static CShaderParam param( "$" #param, paramtype, paramdefault, paramhelp, flags );
 
 #define SHADER_PARAM_OVERRIDE( param, paramtype, paramdefault, paramhelp, flags ) \
-	static const CShaderParam param( ShaderMaterialVars_t::param, paramtype, paramdefault, paramhelp, flags );
+	static CShaderParam param( (ShaderMaterialVars_t) ::param, paramtype, paramdefault, paramhelp, flags );
 
 	// regarding the macro above: the "::" was added to the first argument in order to disambiguate it for GCC.
 	// for example, in cloak.cpp, this usage appears:
@@ -204,69 +215,77 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 
 
 #define SHADER_INIT						\
-	char const* GetName() const	override\
+	char const* GetName() const			\
 	{									\
 		return s_Name;					\
 	}									\
-	int GetFlags() const override		\
+	int GetFlags() const				\
 	{									\
 		return s_nFlags;				\
 	}									\
-	int GetNumParams() const override	\
+	int GetNumParams() const			\
 	{\
 		return CBaseClass::GetNumParams() + s_ShaderParams.Count();\
 	}\
-	char const* GetParamName( int param ) const override \
+	char const* GetParamName( int param ) const \
 	{\
-		static const int nBaseClassParamCount = CBaseClass::GetNumParams();	\
-		if ( param < nBaseClassParamCount )					\
-			return CBaseClass::GetParamName( param );		\
-		return s_ShaderParams[param - nBaseClassParamCount]->GetName();	\
+		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
+		if (param < nBaseClassParamCount)					\
+			return CBaseClass::GetParamName(param);			\
+		else												\
+			return s_ShaderParams[param - nBaseClassParamCount]->GetName();	\
 	}\
-	char const* GetParamHelp( int param ) const override \
+	char const* GetParamHelp( int param ) const \
 	{\
-		static const int nBaseClassParamCount = CBaseClass::GetNumParams();	\
-		if ( param < nBaseClassParamCount )						\
+		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
+		if (param < nBaseClassParamCount)						\
 		{														\
 			if ( !s_pShaderParamOverrides[param] )				\
 				return CBaseClass::GetParamHelp( param );		\
-			return s_pShaderParamOverrides[param]->GetHelp(); \
+			else												\
+				return s_pShaderParamOverrides[param]->GetHelp(); \
 		}														\
-		return s_ShaderParams[param - nBaseClassParamCount]->GetHelp();		\
+		else													\
+			return s_ShaderParams[param - nBaseClassParamCount]->GetHelp();		\
 	}\
-	ShaderParamType_t GetParamType( int param ) const override \
+	ShaderParamType_t GetParamType( int param ) const \
 	{\
-		static const int nBaseClassParamCount = CBaseClass::GetNumParams();	\
-		if ( param < nBaseClassParamCount )				\
+		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
+		if (param < nBaseClassParamCount)				\
 			return CBaseClass::GetParamType( param ); \
-		return s_ShaderParams[param - nBaseClassParamCount]->GetType();		\
+		else \
+			return s_ShaderParams[param - nBaseClassParamCount]->GetType();		\
 	}\
-	char const* GetParamDefault( int param ) const override \
+	char const* GetParamDefault( int param ) const \
 	{\
-		static const int nBaseClassParamCount = CBaseClass::GetNumParams();	\
-		if ( param < nBaseClassParamCount )						\
+		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
+		if (param < nBaseClassParamCount)						\
 		{														\
 			if ( !s_pShaderParamOverrides[param] )				\
 				return CBaseClass::GetParamDefault( param );	\
-			return s_pShaderParamOverrides[param]->GetDefault();\
+			else												\
+				return s_pShaderParamOverrides[param]->GetDefault(); \
 		}														\
-		return s_ShaderParams[param - nBaseClassParamCount]->GetDefault();	\
+		else													\
+			return s_ShaderParams[param - nBaseClassParamCount]->GetDefault();	\
 	}\
-	int GetParamFlags( int param ) const override \
+	int GetParamFlags( int param ) const \
 	{\
-		static const int nBaseClassParamCount = CBaseClass::GetNumParams();	\
-		if ( param < nBaseClassParamCount )						\
+		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
+		if (param < nBaseClassParamCount)						\
 		{														\
 			if ( !s_pShaderParamOverrides[param] )				\
 				return CBaseClass::GetParamFlags( param );		\
-			return s_pShaderParamOverrides[param]->GetFlags();	\
+			else												\
+				return s_pShaderParamOverrides[param]->GetFlags(); \
 		}														\
-		return s_ShaderParams[param - nBaseClassParamCount]->GetFlags(); \
+		else													\
+			return s_ShaderParams[param - nBaseClassParamCount]->GetFlags(); \
 	}\
-	void OnInitShaderInstance( IMaterialVar** params, IShaderInit* pShaderInit, const char* pMaterialName ) override
+	void OnInitShaderInstance( IMaterialVar **params, IShaderInit *pShaderInit, const char *pMaterialName )
 
 #define SHADER_DRAW \
-	void OnDrawElements( IMaterialVar** params, IShaderShadow* pShaderShadow, IShaderDynamicAPI* pShaderAPI, VertexCompressionType_t vertexCompression, CBasePerMaterialContextData** pContextDataPtr ) override
+	void OnDrawElements( IMaterialVar **params, IShaderShadow* pShaderShadow, IShaderDynamicAPI* pShaderAPI, VertexCompressionType_t vertexCompression, CBasePerMaterialContextData **pContextDataPtr )
 
 #define SHADOW_STATE if (pShaderShadow)
 #define DYNAMIC_STATE if (pShaderAPI)
@@ -315,15 +334,16 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 		namespace _name\
 		{\
 			static const char *s_Name = #_name; \
+			static const char *s_HelpString = _help;\
 			static int s_nFlags = _flags;\
 			class CShader : public _base::CShader\
 			{\
 			public:\
-				char const* GetName() const override\
+				char const* GetName() const			\
 				{									\
 					return s_Name;					\
 				}									\
-				int GetFlags() const override		\
+				int GetFlags() const				\
 				{									\
 					return s_nFlags;				\
 				}

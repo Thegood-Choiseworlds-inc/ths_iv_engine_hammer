@@ -15,7 +15,7 @@ public:
 	{
 	}
 
-	int GetIndex()
+	int GetIndex() const
 	{
 		return 0;
 	}
@@ -31,7 +31,7 @@ public:
 	{
 	}
 
-	int GetIndex()
+	int GetIndex() const
 	{
 		return 0;
 	}

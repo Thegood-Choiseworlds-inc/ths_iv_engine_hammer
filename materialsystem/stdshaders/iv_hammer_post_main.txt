@@ -1,0 +1,14 @@
+//
+// Standard shaders collection
+//
+//  These shaders are compiled as the following shader models:
+//	    _ps20.vcs
+//	    _ps20b.vcs
+//	    _vs20.vcs
+//
+
+
+screenspaceefffect_vs20.fxc
+lpreview_vs20.fxc
+lpreview_ps2x.fxc
+lpreview_out_ps2x.fxc

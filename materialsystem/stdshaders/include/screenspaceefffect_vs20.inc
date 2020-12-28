@@ -10,8 +10,8 @@
 
 class screenspaceefffect_vs20_Static_Index
 {
-	int m_nVERTEXCOLOR : 3;
-	int m_nTRANSFORMVERTS : 3;
+	unsigned int m_nVERTEXCOLOR : 2;
+	unsigned int m_nTRANSFORMVERTS : 2;
 public:
 	void SetVERTEXCOLOR( int i )
 	{
@@ -31,7 +31,7 @@ public:
 		m_nTRANSFORMVERTS = 0;
 	}
 
-	int GetIndex()
+	int GetIndex() const
 	{
 		return ( 1 * m_nVERTEXCOLOR ) + ( 2 * m_nTRANSFORMVERTS ) + 0;
 	}
@@ -47,7 +47,7 @@ public:
 	{
 	}
 
-	int GetIndex()
+	int GetIndex() const
 	{
 		return 0;
 	}
