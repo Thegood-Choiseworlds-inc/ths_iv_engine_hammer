@@ -25,6 +25,7 @@ enum
 	id_InsertParmMapFile,
 	id_InsertParmMapPath,
 	id_InsertParmBspDir,
+	id_InsertParmNoAOHelp,
 	id_InsertParmExeDir,
 	id_InsertParmGameDir,
 
@@ -213,6 +214,9 @@ BOOL COPTBuild::HandleInsertParm(UINT nID)
 		case id_InsertParmBspDir:
 			pszInsert = "$bspdir";
 			break;
+		case id_InsertParmNoAOHelp:
+			pszInsert = "-noambientocclusion";
+			break;
 		case id_InsertParmGameDir:
 			pszInsert = "$gamedir";
 			break;
@@ -243,6 +247,7 @@ void COPTBuild::InsertParm(UINT nID, CEdit *pEdit)
 	menu.AppendMenu(MF_SEPARATOR);
 	menu.AppendMenu(MF_STRING, id_InsertParmExeDir, "Game Executable Directory");
 	menu.AppendMenu(MF_STRING, id_InsertParmBspDir, "BSP Directory");
+	menu.AppendMenu(MF_STRING, id_InsertParmNoAOHelp, "Add no AO Brush Parm");
 	menu.AppendMenu(MF_STRING, id_InsertParmGameDir, "Game Directory");
 
 	// track menu
