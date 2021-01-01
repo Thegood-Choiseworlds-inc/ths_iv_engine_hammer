@@ -20,6 +20,7 @@
 
 
 class CMapView3D;
+class CMapViewLogical;
 class CToolPickEntity;
 
 
@@ -78,6 +79,13 @@ public:
 	virtual bool OnRMouseUp3D(CMapView3D *pView, UINT nFlags, const Vector2D &vPoint);
 	virtual bool OnRMouseDown3D(CMapView3D *pView, UINT nFlags, const Vector2D &vPoint);
 	virtual bool OnMouseMove3D(CMapView3D *pView, UINT nFlags, const Vector2D &vPoint);
+
+	virtual bool OnLMouseUpLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint) { return true; }
+	virtual bool OnLMouseDownLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint);
+	virtual bool OnLMouseDblClkLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint) { return true; }
+	virtual bool OnRMouseUpLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint) { return true; }
+	virtual bool OnRMouseDownLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint) { return true; }
+	virtual bool OnMouseMoveLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint);
 
 	//
 	// Functions specific to this tool.

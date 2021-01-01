@@ -78,6 +78,9 @@ public:
 	static inline void ShowEntityConnections(bool bShow) { s_bShowEntityConnections = bShow; }
 	static inline bool GetShowEntityConnections(void) { return s_bShowEntityConnections; }
 
+	static inline void ShowUnconnectedEntities(bool bShow) { s_bShowUnconnectedEntities = bShow; }
+	static inline bool GetShowUnconnectedEntities(void) { return s_bShowUnconnectedEntities; }
+
 	void ReplaceTargetname(const char *szOldName, const char *szNewName);
 
 	void CalculateTypeFlags( void );
@@ -120,9 +123,13 @@ public:
 	// Rendering.
 	//
 	virtual void Render2D(CRender2D *pRender);
+	virtual void RenderLogical( CRender2D *pRender );
 	virtual bool IsLogical();
+	virtual bool IsVisibleLogical(void);
 	virtual void SetLogicalPosition( const Vector2D &vecPosition );
-	virtual const Vector2D& GetLogicalPosition();
+	virtual const Vector2D& GetLogicalPosition( );
+	virtual void GetRenderLogicalBox( Vector2D &mins, Vector2D &maxs );
+	void GetLogicalConnectionPosition( LogicalConnection_t i, Vector2D &vecPosition );
 
 	virtual bool ShouldSnapToHalfGrid();
 
@@ -137,6 +144,7 @@ public:
 	//
 	virtual CMapClass *PrepareSelection(SelectMode_t eSelectMode);
 	virtual bool HitTest2D(CMapView2D *pView, const Vector2D &point, HitInfo_t &HitData);
+	virtual bool HitTestLogical(CMapViewLogical *pView, const Vector2D &point, HitInfo_t &nHitData);
 
 	//
 	// Notifications.
@@ -244,6 +252,7 @@ private:
 
 	static bool s_bShowEntityNames;			// Whether to render entity names in the 2D views.
 	static bool s_bShowEntityConnections;	// Whether to render lines indicating entity connections in the 2D views.
+	static bool s_bShowUnconnectedEntities;	// Whether to render unconnected entities in logical views
 
 	WORD flags;							// flagPlaceholder
 	CMapEntity *m_pMoveParent;			// for entity movement hierarchy

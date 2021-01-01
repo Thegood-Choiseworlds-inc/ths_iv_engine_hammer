@@ -26,15 +26,9 @@ void CMapGroup::AddChild(CMapClass *pChild)
 {
 	pChild->SetRenderColor(r,g,b);
 	CMapClass::AddChild(pChild);
-	auto c = GetChildren();
-	Vector2D finalPos{ 0, 0 };
-	for ( int i = 0; i < c->Count(); i++ )
-	{
-		const auto& pos = c->Element( i )->GetLogicalPosition();
-		if ( pos.x != COORD_NOTINIT )
-			finalPos += pos;
-	}
-	m_vecLogicalPosition = finalPos / c->Count();
+	Vector2D	mins, maxs;
+	GetRenderLogicalBox(mins, maxs);
+	m_vecLogicalPosition = ( mins + maxs ) / 2;
 }
 
 
@@ -93,6 +87,22 @@ void CMapGroup::SetLogicalPosition( const Vector2D &vecPosition )
 const Vector2D& CMapGroup::GetLogicalPosition()
 {
 	return m_vecLogicalPosition;
+}
+
+void CMapGroup::GetRenderLogicalBox( Vector2D &mins, Vector2D &maxs )
+{
+	mins.Init( COORD_NOTINIT, COORD_NOTINIT );
+	maxs.Init( -COORD_NOTINIT, -COORD_NOTINIT );
+
+	FOR_EACH_OBJ( m_Children, pos )
+	{
+		CMapClass *pobj = m_Children[pos];
+		// update logical bounds
+		Vector2D logicalMins,logicalMaxs;
+		pobj->GetRenderLogicalBox( logicalMins, logicalMaxs );
+		mins = mins.Min(logicalMins);
+		maxs = maxs.Max(logicalMaxs);
+	}
 }
 
 //-----------------------------------------------------------------------------

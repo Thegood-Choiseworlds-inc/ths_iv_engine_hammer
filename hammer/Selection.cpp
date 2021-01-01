@@ -67,6 +67,20 @@ bool CSelection::GetBounds(Vector &vecMins, Vector &vecMaxs)
 	return true;;
 }
 
+bool CSelection::GetLogicalBounds(Vector2D &vecMins, Vector2D &vecMaxs)
+{
+	if ( m_bBoundsDirty )
+		UpdateSelectionBounds();
+
+	if ( m_SelectionList.Count() == 0)
+		return false;
+
+	vecMins = m_vecLogicalMins;
+	vecMaxs = m_vecLogicalMaxs;
+
+	return true;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Used for translations. Uses entity origins and brush bounds.
 // That way, when moving stuff, the entity origins will stay on the grid.
@@ -116,6 +130,9 @@ void CSelection::UpdateSelectionBounds( void )
 {
 	m_Bounds.ResetBounds();
 
+	m_vecLogicalMins[0] = m_vecLogicalMins[1] = COORD_NOTINIT;
+	m_vecLogicalMaxs[0] = m_vecLogicalMaxs[1] = -COORD_NOTINIT;
+
 	for (int i = 0; i < m_SelectionList.Count(); i++)
 	{
 		CMapClass *pobj = m_SelectionList[i];
@@ -124,6 +141,12 @@ void CSelection::UpdateSelectionBounds( void )
 		Vector mins,maxs;
 		pobj->GetRender2DBox(mins, maxs);
 		m_Bounds.UpdateBounds(mins, maxs);
+		
+		// update logical bounds
+		Vector2D logicalMins,logicalMaxs;
+		pobj->GetRenderLogicalBox( logicalMins, logicalMaxs );
+		Vector2DMin( logicalMins, m_vecLogicalMins, m_vecLogicalMins );
+		Vector2DMax( logicalMaxs, m_vecLogicalMaxs, m_vecLogicalMaxs );
 	}
 
 	// remeber bounds if valid
@@ -144,6 +167,19 @@ bool CSelection::GetBoundsCenter(Vector &vecCenter)
 		return false;
 
 	m_Bounds.GetBoundsCenter( vecCenter );
+
+	return true;
+}
+
+bool CSelection::GetLogicalBoundsCenter( Vector2D &vecCenter )
+{
+	if ( m_bBoundsDirty )
+		UpdateSelectionBounds();
+
+	if ( m_SelectionList.Count() == 0 )
+		return false;
+
+	vecCenter = (m_vecLogicalMins+m_vecLogicalMaxs)/2;
 
 	return true;
 }

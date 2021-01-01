@@ -633,3 +633,72 @@ void CMapSprite::Render2D(CRender2D *pRender)
 		}
 	}
 }
+
+
+//-----------------------------------------------------------------------------
+// Called by entity code to render sprites
+//-----------------------------------------------------------------------------
+void CMapSprite::RenderLogicalAt(CRender2D *pRender, const Vector2D &vMins, const Vector2D &vMaxs )
+{
+	// If we have a sprite, render it.
+	if (!m_pSpriteInfo)
+		return;
+
+	m_pSpriteInfo->Bind( pRender, 0 );
+	pRender->PushRenderMode( RENDER_MODE_TEXTURED );
+
+	unsigned char color[4] = { 255, 255, 255, 255 };
+
+	SpriteColor( color, m_eRenderMode, m_RenderColor, 255 );
+
+	// If selected, render a yellow wireframe box.
+	if ( GetSelectionState() != SELECT_NONE )
+	{
+		color[0] = 255;
+		color[1] = color[2] = 0;
+	}
+
+	bool bPopMode = pRender->BeginClientSpace();
+
+	Vector2D vecMins, vecMaxs;
+	pRender->TransformPoint( vecMins, Vector( vMins.x, vMins.y, 0 ) );
+	pRender->TransformPoint( vecMaxs, Vector( vMaxs.x, vMaxs.y, 0 ) );
+
+	if ( vecMins.x > vecMaxs.x )
+		V_swap( vecMins.x, vecMaxs.x );
+
+	if ( vecMins.y > vecMaxs.y )
+		V_swap( vecMins.y, vecMaxs.y );
+
+	CMatRenderContextPtr pRenderContext( MaterialSystemInterface() );
+	IMesh* pMesh = pRenderContext->GetDynamicMesh();
+	CMeshBuilder meshBuilder;
+	meshBuilder.Begin( pMesh, MATERIAL_POLYGON, 4 );
+
+	meshBuilder.Position3f( vecMins.x, vecMins.y, 0.0f );
+	meshBuilder.TexCoord2f(0, 0, 0);
+	meshBuilder.Color4ubv( color );
+	meshBuilder.AdvanceVertex();
+
+	meshBuilder.Position3f( vecMaxs.x, vecMins.y, 0.0f );
+	meshBuilder.TexCoord2f(0, 1, 0);
+	meshBuilder.Color4ubv( color );
+	meshBuilder.AdvanceVertex();
+
+	meshBuilder.Position3f( vecMaxs.x, vecMaxs.y, 0.0f );
+	meshBuilder.TexCoord2f(0, 1, 1);
+	meshBuilder.Color4ubv( color );
+	meshBuilder.AdvanceVertex();
+
+	meshBuilder.Position3f( vecMins.x, vecMaxs.y, 0.0f );
+	meshBuilder.TexCoord2f(0, 0, 1);
+	meshBuilder.Color4ubv( color );
+	meshBuilder.AdvanceVertex();
+
+	meshBuilder.End(false, true);
+
+	if ( bPopMode )
+		pRender->EndClientSpace();
+
+	pRender->PopRenderMode();
+}

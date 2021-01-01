@@ -13,6 +13,7 @@
 #include "mapworld.h"
 #include "mapdoc.h"
 #include "mapview2d.h"
+#include "mapviewlogical.h"
 #include "mapview3d.h"
 #include "tooldefs.h"
 #include "stocksolids.h"
@@ -522,6 +523,60 @@ void CMapView2DBase::DrawGrid(CRender2D *pRender, int xAxis, int yAxis, float de
 	}
 }
 
+void CMapView2DBase::DrawGridLogical( CRender2D *pRender )
+{
+	CMapDoc *pDoc = GetMapDoc();
+
+	if (pDoc == NULL)
+		return;
+
+	// Grid in logical view is always 1024
+	int nGridSpacing = 1024;
+
+	s_iCustomGridSpacing = nGridSpacing;
+	s_bGridDots = false;
+
+	int xAxis = 0;
+	int yAxis = 1;
+	int xMin = SnapToGrid( (int)max( g_MIN_MAP_COORD, m_ViewMin[xAxis]-nGridSpacing ), nGridSpacing );
+	int xMax = SnapToGrid( (int)min( g_MAX_MAP_COORD, m_ViewMax[xAxis]+nGridSpacing ), nGridSpacing );
+	int yMin = SnapToGrid( (int)max( g_MIN_MAP_COORD, m_ViewMin[yAxis]-nGridSpacing ), nGridSpacing );
+	int yMax = SnapToGrid( (int)min( g_MAX_MAP_COORD, m_ViewMax[yAxis]+nGridSpacing ), nGridSpacing );
+
+	Assert( xMin < xMax );
+	Assert( yMin < yMax );
+
+	// Draw the vertical grid lines.
+	float depth = 0.0f;
+	Vector vPointMin(depth,depth,depth);
+	Vector vPointMax(depth,depth,depth);
+
+	vPointMin[xAxis] = xMin;
+	vPointMax[xAxis] = xMax;
+
+	for (int y = yMin; y <= yMax; y += nGridSpacing )
+	{
+		pRender->SetDrawColor( m_clrGrid );
+
+		HighlightGridLine( pRender, y );
+
+		vPointMin[yAxis] = vPointMax[yAxis] = y;
+		pRender->DrawLine( vPointMin, vPointMax );
+	}
+
+	vPointMin[yAxis] = yMin;
+	vPointMax[yAxis] = yMax;
+
+	for (int x = xMin; x <= xMax; x += nGridSpacing )
+	{
+		pRender->SetDrawColor( m_clrGrid );
+
+		HighlightGridLine( pRender, x );
+
+		vPointMin[xAxis] = vPointMax[xAxis] = x;
+		pRender->DrawLine( vPointMin, vPointMax );
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -859,8 +914,19 @@ void CMapView2DBase::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	// Pass the message to the active tool.
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool && pTool->OnKeyDown2D( static_cast<CMapView2D*>( this ), nChar, nRepCnt, nFlags ) )
-		return;
+	if (pTool)
+	{
+		if ( IsLogical() )
+		{
+			if ( pTool->OnKeyDownLogical( static_cast<CMapViewLogical*>( this ), nChar, nRepCnt, nFlags ) )
+				return;
+		}
+		else
+		{
+			if ( pTool->OnKeyDown2D( static_cast<CMapView2D*>( this ), nChar, nRepCnt, nFlags ) )
+				return;
+		}
+	}
 
 	// The tool didn't handle the key. Perform default handling for this view.
 //	bool bShift = nFlags & MK_SHIFT;
@@ -968,8 +1034,19 @@ void CMapView2DBase::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 		// Pass the message to the active tool.
 		//
 		CBaseTool *pTool = m_pToolManager->GetActiveTool();
-		if ( pTool && pTool->OnKeyUp2D( static_cast<CMapView2D*>( this ), nChar, nRepCnt, nFlags ) )
-			return;
+		if (pTool)
+		{
+			if ( IsLogical() )
+			{
+				if ( pTool->OnKeyUpLogical( static_cast<CMapViewLogical*>( this ), nChar, nRepCnt, nFlags ) )
+					return;
+			}
+			else
+			{
+				if ( pTool->OnKeyUp2D( static_cast<CMapView2D*>( this ), nChar, nRepCnt, nFlags ) )
+					return;
+			}
+		}
 	}
 
 	CView::OnKeyUp(nChar, nRepCnt, nFlags);
@@ -986,8 +1063,19 @@ void CMapView2DBase::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	// Pass the message to the active tool.
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool && pTool->OnChar2D( static_cast<CMapView2D*>( this ), nChar, nRepCnt, nFlags ) )
-		return;
+	if ( pTool )
+	{
+		if ( IsLogical() )
+		{
+			if ( pTool->OnCharLogical( static_cast<CMapViewLogical*>( this ), nChar, nRepCnt, nFlags ) )
+				return;
+		}
+		else
+		{
+			if ( pTool->OnChar2D( static_cast<CMapView2D*>( this ), nChar, nRepCnt, nFlags ) )
+				return;
+		}
+	}
 
 	CView::OnChar( nChar, nRepCnt, nFlags );
 }
@@ -1045,6 +1133,13 @@ int CMapView2DBase::ObjectsAt( CMapWorld *pWorld, const Vector2D &vPoint, HitInf
 		{
 			nIndex += ObjectsAt( pWorldChild, vPoint, &pHitData[ nIndex ], nMaxObjects - nIndex );
 		}
+		else if ( IsLogical() )
+		{
+			if ( pChild->HitTestLogical( static_cast<CMapViewLogical*>(this), vPoint, pHitData[nIndex] ) )
+			{
+				nIndex++;
+			}
+		}
 		else
 		{
 			if ( pChild->HitTest2D( static_cast<CMapView2D*>(this), vPoint, pHitData[nIndex] ) )
@@ -1091,8 +1186,19 @@ void CMapView2DBase::OnLButtonDown(UINT nFlags, CPoint point)
 	// Pass the message to the active tool.
 	//
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool && pTool->OnLMouseDown2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D( point.x, point.y ) ) )
-		return;
+	if (pTool)
+	{
+		if ( IsLogical() )
+		{
+			if ( pTool->OnLMouseDownLogical( static_cast<CMapViewLogical*>( this ), nFlags, Vector2D( point.x, point.y ) ) )
+				return;
+		}
+		else
+		{
+			if ( pTool->OnLMouseDown2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D( point.x, point.y ) ) )
+				return;
+		}
+	}
 
 	m_ptLDownClient = point;
 
@@ -1175,8 +1281,20 @@ void CMapView2DBase::OnMouseMove(UINT nFlags, CPoint point)
 
 	// Pass the message to the active tool.
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool && pTool->OnMouseMove2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D( point.x, point.y ) ) )
-		return;
+	if (pTool)
+	{
+		Vector2D vPoint( point.x, point.y );
+		if ( IsLogical() )
+		{
+			if ( pTool->OnMouseMoveLogical( static_cast<CMapViewLogical*>( this ), nFlags, vPoint ) )
+				return;
+		}
+		else
+		{
+			if ( pTool->OnMouseMove2D( static_cast<CMapView2D*>( this ), nFlags, vPoint ) )
+				return;
+		}
+	}
 
 	//
 	// The tool didn't handle the message. Make sure the cursor is set.
@@ -1208,8 +1326,19 @@ BOOL CMapView2DBase::OnMouseWheel(UINT nFlags, short zDelta, CPoint point)
 	// Pass the message to the active tool.
 	//
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool && pTool->OnMouseWheel2D( static_cast<CMapView2D*>( this ), nFlags, zDelta, Vector2D( point.x, point.y ) ) )
-		return TRUE;
+	if (pTool)
+	{
+		if ( IsLogical() )
+		{
+			if ( pTool->OnMouseWheelLogical( static_cast<CMapViewLogical*>( this ), nFlags, zDelta, Vector2D(point.x,point.y) ) )
+				return TRUE;
+		}
+		else
+		{
+			if ( pTool->OnMouseWheel2D( static_cast<CMapView2D*>( this ), nFlags, zDelta, Vector2D(point.x,point.y) ) )
+				return TRUE;
+		}
+	}
 
 	if (zDelta < 0)
 	{
@@ -1220,7 +1349,7 @@ BOOL CMapView2DBase::OnMouseWheel(UINT nFlags, short zDelta, CPoint point)
 		ZoomIn(nFlags & MK_CONTROL);
 	}
 
-	return TRUE;
+	return(TRUE);
 }
 
 
@@ -1293,8 +1422,19 @@ void CMapView2DBase::OnLButtonUp(UINT nFlags, CPoint point)
 	// Pass the message to the active tool.
 	//
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool && pTool->OnLMouseUp2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D( point.x, point.y ) ) )
-		return;
+	if (pTool)
+	{
+		if ( IsLogical() )
+		{
+			if ( pTool->OnLMouseUpLogical( static_cast<CMapViewLogical*>( this ), nFlags, Vector2D(point.x,point.y) ) )
+				return;
+		}
+		else
+		{
+			if ( pTool->OnLMouseUp2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D(point.x,point.y) ) )
+				return;
+		}
+	}
 
 	// we might have removed some stuff that was relevant:
 	pDoc->UpdateStatusbar();
@@ -1323,8 +1463,16 @@ void CMapView2DBase::OnLButtonDblClk(UINT nFlags, CPoint point)
 	if (pTool != NULL)
 	{
 		Vector2D vPoint( point.x, point.y );
-		pTool->OnLMouseDblClk2D( static_cast<CMapView2D*>( this ), nFlags, vPoint );
-		pTool->OnLMouseDown2D( static_cast<CMapView2D*>( this ), nFlags, vPoint );
+		if ( IsLogical() )
+		{
+			pTool->OnLMouseDblClkLogical( static_cast<CMapViewLogical*>( this ), nFlags, vPoint );
+			pTool->OnLMouseDownLogical( static_cast<CMapViewLogical*>( this ), nFlags, vPoint );
+		}
+		else
+		{
+			pTool->OnLMouseDblClk2D( static_cast<CMapView2D*>( this ), nFlags, vPoint );
+			pTool->OnLMouseDown2D( static_cast<CMapView2D*>( this ), nFlags, vPoint );
+		}
 	}
 }
 
@@ -1361,6 +1509,17 @@ void CMapView2DBase::UpdateView( int nFlags )
 {
 	if ( nFlags & MAPVIEW_UPDATE_ONLY_3D )
 		return;
+
+	if ( IsLogical() )
+	{
+		if ( nFlags & MAPVIEW_UPDATE_ONLY_2D )
+			return;
+	}
+	else
+	{
+		if ( nFlags & MAPVIEW_UPDATE_ONLY_LOGICAL )
+			return;
+	}
 
 	if(nFlags & MAPVIEW_OPTIONS_CHANGED)
 	{
@@ -1537,8 +1696,19 @@ void CMapView2DBase::OnRButtonDown(UINT nFlags, CPoint point)
 		return;
 
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool && pTool->OnRMouseDown2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D( point.x, point.y ) ) )
-		return;
+	if (pTool)
+	{
+		if ( IsLogical() )
+		{
+			if ( pTool->OnRMouseDownLogical( static_cast<CMapViewLogical*>( this ), nFlags, Vector2D(point.x,point.y) ) )
+				return;
+		}
+		else
+		{
+			if ( pTool->OnRMouseDown2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D(point.x,point.y) ) )
+				return;
+		}
+	}
 
 	CView::OnRButtonDown(nFlags, point);
 }
@@ -1585,8 +1755,19 @@ void CMapView2DBase::OnContextMenu(UINT nFlags, const Vector2D &vPoint)
 	// Pass the message to the active tool.
 	//
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool && pTool->OnContextMenu2D( static_cast<CMapView2D*>( this ), nFlags, vPoint ) )
-		return;
+	if (pTool)
+	{
+		if ( IsLogical() )
+		{
+			if ( pTool->OnContextMenuLogical( static_cast<CMapViewLogical*>( this ), nFlags, vPoint ) )
+				return;
+		}
+		else
+		{
+			if ( pTool->OnContextMenu2D( static_cast<CMapView2D*>( this ), nFlags, vPoint ) )
+				return;
+		}
+	}
 
 	static CMenu menu, menuDefault;
 	static bool bInit = false;
@@ -1644,8 +1825,17 @@ void CMapView2DBase::OnRButtonUp(UINT nFlags, CPoint point)
 	// Pass the message to the active tool.
 
 	CBaseTool *pTool = m_pToolManager->GetActiveTool();
-	if ( pTool )
-		pTool->OnRMouseUp2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D( point.x, point.y ) );
+	if (pTool)
+	{
+		if ( IsLogical() )
+		{
+			pTool->OnRMouseUpLogical( static_cast<CMapViewLogical*>( this ), nFlags, Vector2D(point.x,point.y) );
+		}
+		else
+		{
+			pTool->OnRMouseUp2D( static_cast<CMapView2D*>( this ), nFlags, Vector2D(point.x,point.y) );
+		}
+	}
 
 	OnContextMenu( nFlags, Vector2D(point.x,point.y) );
 

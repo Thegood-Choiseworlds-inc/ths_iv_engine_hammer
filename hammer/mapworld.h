@@ -75,6 +75,7 @@ class CMapWorld : public CMapClass, public CEditGameClass
 
 		// Groups have to be treated as logical because they potentially have logical children
 		virtual bool IsLogical(void) { return true; }
+		virtual bool IsVisibleLogical(void) { return IsVisible(); }
 		virtual bool IsEditable( void );
 
 		//

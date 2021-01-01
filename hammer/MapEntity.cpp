@@ -19,6 +19,7 @@
 #include "mapanimator.h"
 #include "mapsolid.h"
 #include "mapview2d.h" // dvs FIXME: For HitTest2D implementation
+#include "mapviewlogical.h"
 #include "mapworld.h"
 #include "options.h"
 #include "render2d.h"
@@ -36,19 +37,25 @@
 
 IMPLEMENT_MAPCLASS(CMapEntity)
 
+#define LOGICAL_BOX_WIDTH 300
+#define LOGICAL_BOX_HEIGHT 300
+#define LOGICAL_BOX_INNER_OFFSET 10
+#define LOGICAL_BOX_CONNECTOR_INPUT_WIDTH 50
+#define LOGICAL_BOX_CONNECTOR_OUTPUT_WIDTH 50
+#define LOGICAL_BOX_CONNECTOR_RADIUS 10
+#define LOGICAL_BOX_ARROW_LENGTH 25
+#define LOGICAL_BOX_ARROW_HEIGHT 10
+
 class CMapAnimator;
 class CMapKeyFrame;
 
 
 bool CMapEntity::s_bShowEntityNames = true;
 bool CMapEntity::s_bShowEntityConnections = false;
+bool CMapEntity::s_bShowUnconnectedEntities = true;
 
 
-struct FindData
-{
-	MDkeyvalue kv;
-	CMapObjectList foundEntities;
-};
+static CMapObjectList FoundEntities;
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -56,13 +63,15 @@ struct FindData
 //			pKV -
 // Output :
 //-----------------------------------------------------------------------------
-static BOOL FindKeyValue( CMapEntity* pEntity, FindData* data )
+static BOOL FindKeyValue(CMapEntity *pEntity, MDkeyvalue *pKV)
 {
-	LPCTSTR pszValue = pEntity->GetKeyValue( data->kv.szKey );
-	if ( !pszValue || strcmpi( pszValue, data->kv.szValue ) )
+	LPCTSTR pszValue = pEntity->GetKeyValue(pKV->szKey);
+	if (!pszValue || strcmpi(pszValue, pKV->szValue))
+	{
 		return TRUE;
+	}
 
-	data->foundEntities.AddToTail(pEntity);
+	FoundEntities.AddToTail(pEntity);
 
 	return TRUE;
 }
@@ -1998,17 +2007,18 @@ void CMapEntity::Render2D(CRender2D *pRender)
 		if (pszTarget != NULL)
 		{
 			CMapWorld *pWorld = GetWorldObject(this);
-			FindData data;
-			data.kv.Set("targetname", pszTarget);
+			MDkeyvalue kv("targetname", pszTarget);
 
-			pWorld->EnumChildren(FindKeyValue, &data, MAPCLASS_TYPE(CMapEntity));
+			CMapObjectList FoundEntities;
+			FoundEntities.RemoveAll();
+			pWorld->EnumChildren(FindKeyValue, &kv, MAPCLASS_TYPE(CMapEntity));
 
 			Vector vCenter1,vCenter2;
 			GetBoundsCenter( vCenter1 );
 
-			FOR_EACH_OBJ( data.foundEntities, p )
+			FOR_EACH_OBJ( FoundEntities, p )
 			{
-				CMapClass *pEntity = data.foundEntities.Element(p);
+				CMapClass *pEntity = (CMapEntity *)FoundEntities.Element(p);
 				pEntity->GetBoundsCenter(vCenter2);
 				pRender->DrawLine( vCenter1, vCenter2 );
 			}
@@ -2034,6 +2044,16 @@ void CMapEntity::Render2D(CRender2D *pRender)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Gets the 2D logical view bounding box
+//-----------------------------------------------------------------------------
+void CMapEntity::GetRenderLogicalBox( Vector2D &mins, Vector2D &maxs )
+{
+	mins.x = m_vecLogicalPosition.x;
+	maxs.x = m_vecLogicalPosition.x + LOGICAL_BOX_WIDTH + LOGICAL_BOX_CONNECTOR_INPUT_WIDTH + LOGICAL_BOX_CONNECTOR_OUTPUT_WIDTH;
+	mins.y = m_vecLogicalPosition.y;
+	maxs.y = m_vecLogicalPosition.y + LOGICAL_BOX_HEIGHT;
+}
 
 //-----------------------------------------------------------------------------
 // Logical position accessor
@@ -2048,6 +2068,145 @@ void CMapEntity::SetLogicalPosition( const Vector2D &vecPosition )
 	m_vecLogicalPosition = vecPosition;
 }
 
+//-----------------------------------------------------------------------------
+// Returns a logical position
+//-----------------------------------------------------------------------------
+void CMapEntity::GetLogicalConnectionPosition( LogicalConnection_t i, Vector2D &vecPosition )
+{
+	Vector2D vecMins, vecMaxs;
+	GetRenderLogicalBox( vecMins, vecMaxs );
+
+	vecPosition.y = ( vecMins.y + vecMaxs.y ) * 0.5f;
+
+	if ( i == LOGICAL_CONNECTION_INPUT )
+	{
+		vecPosition.x = vecMins.x;
+	}
+	else
+	{
+		vecPosition.x = vecMaxs.x;
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Renders into the logical view
+//-----------------------------------------------------------------------------
+void CMapEntity::RenderLogical( CRender2D *pRender )
+{
+	// Render all our children (helpers & solids)
+	BaseClass::RenderLogical(pRender);
+
+	Vector2D vecMins, vecMaxs;
+	GetRenderLogicalBox( vecMins, vecMaxs );
+
+	Vector2D vecBoxMins = vecMins;
+	Vector2D vecBoxMaxs = vecMaxs;
+	vecBoxMins.x += LOGICAL_BOX_CONNECTOR_INPUT_WIDTH;
+	vecBoxMaxs.x -= LOGICAL_BOX_CONNECTOR_OUTPUT_WIDTH;
+
+	// Define the entity highlight/lowlight edges
+	Vector2D vecInnerMins = vecBoxMins, vecInnerMaxs = vecBoxMaxs;
+	vecInnerMins.x += LOGICAL_BOX_INNER_OFFSET;
+	vecInnerMins.y += LOGICAL_BOX_INNER_OFFSET;
+	vecInnerMaxs.x -= LOGICAL_BOX_INNER_OFFSET;
+	vecInnerMaxs.y -= LOGICAL_BOX_INNER_OFFSET;
+
+	// Get the entity render color
+	color32 rgbColor = GetRenderColor( pRender );
+	color32	rgbHighlight = { ( byte )( 7 * rgbColor.r / 8 ), ( byte )( 7 * rgbColor.g / 8 ), ( byte )( 7 * rgbColor.b / 8 ), 255 };
+	color32 rgbLowlight = { ( byte )( 5 * rgbColor.r / 8 ), ( byte )( 5 * rgbColor.g / 8 ), ( byte )( 5 * rgbColor.b / 8 ), 255 };
+	color32 rgbEdgeColor = { ( byte )( 3 * rgbColor.r / 8 ), ( byte )( 3 * rgbColor.g / 8 ), ( byte )( 3 * rgbColor.b / 8 ), 255 };
+	color32 rgbInterior = { ( byte )( 2 * rgbColor.r / 8 ), ( byte )( 2 * rgbColor.g / 8 ), ( byte )( 2 * rgbColor.b / 8 ), 255 };
+
+	// Draw an inside UpperLeft highlight rect (leading edge highlight)
+	pRender->SetDrawColor( rgbHighlight.r, rgbHighlight.g, rgbHighlight.b );
+	pRender->DrawRectangle( Vector( vecBoxMins.x, vecBoxMins.y, 0.0f ), Vector( vecBoxMaxs.x, vecBoxMaxs.y, 0.0f ), true, 0 );
+
+	// Draw an inside LowerRight lowlight rect (trailing edge lowlight)
+	pRender->SetDrawColor( rgbLowlight.r, rgbLowlight.g, rgbLowlight.b );
+	pRender->DrawRectangle( Vector( vecInnerMins.x, vecBoxMins.y, 0.0f ), Vector( vecBoxMaxs.x, vecInnerMaxs.y, 0.0f ), true, 0 );
+
+	// Draw an outside border rect in the entities render color
+	pRender->SetDrawColor( rgbEdgeColor.r, rgbEdgeColor.g, rgbEdgeColor.b );
+	pRender->DrawRectangle( Vector( vecBoxMins.x, vecBoxMins.y, 0.0f ), Vector( vecBoxMaxs.x, vecBoxMaxs.y, 0.0f ), false, 0 );
+
+	// Draw the small diagonals connecting the outer and inner corners
+	pRender->DrawLine( Vector( vecBoxMins.x, vecBoxMins.y, 0.0f ), Vector( vecBoxMaxs.x, vecBoxMaxs.y, 0.0f ) );
+	pRender->DrawLine( Vector( vecBoxMins.x, vecBoxMaxs.y, 0.0f ), Vector( vecBoxMaxs.x, vecBoxMins.y, 0.0f ) );
+
+	// Draw interior background first
+	pRender->SetDrawColor( rgbInterior.r, rgbInterior.g, rgbInterior.b );
+	pRender->DrawRectangle( Vector( vecInnerMins.x, vecInnerMins.y, 0.0f ), Vector( vecInnerMaxs.x, vecInnerMaxs.y, 0.0f ), true, 0 );
+
+	// Draws the sprite helper(s) (if it has them)
+	bool bFoundSpriteHelper = false;
+
+	FOR_EACH_OBJ( m_Children, pos )
+	{
+		CMapSprite *pSprite = dynamic_cast<CMapSprite*>( m_Children[pos] );
+		if ( pSprite )
+		{
+			// Render the sprite on top of the background
+			pSprite->RenderLogicalAt( pRender, vecInnerMins, vecInnerMaxs );
+			bFoundSpriteHelper = true;
+		}
+	}
+
+	// Fill in the interior with entity color if no sprite was found
+	if ( !bFoundSpriteHelper )
+	{
+		// Redraw the interior with the entity's render color
+		pRender->SetDrawColor( rgbColor.r, rgbColor.g, rgbColor.b );
+		pRender->DrawRectangle( Vector( vecInnerMins.x, vecInnerMins.y, 0.0f ), Vector( vecInnerMaxs.x, vecInnerMaxs.y, 0.0f ), true, 0 );
+
+		// Put an inner border around the entity color block
+		pRender->SetDrawColor( rgbEdgeColor.r, rgbEdgeColor.g, rgbEdgeColor.b );
+		pRender->DrawRectangle( Vector( vecInnerMins.x, vecInnerMins.y, 0.0f ), Vector( vecInnerMaxs.x, vecInnerMaxs.y, 0.0f ), false, 0 );
+	}
+
+	// Draw the rest of the entity in the entity color
+	pRender->SetDrawColor( rgbColor.r, rgbColor.g, rgbColor.b );
+
+	// Draws the connectors
+	float flConnectorY = ( vecMins.y + vecMaxs.y ) * 0.5f;
+	pRender->DrawCircle( Vector( vecMins.x + LOGICAL_BOX_CONNECTOR_RADIUS, flConnectorY, 0.0f ), LOGICAL_BOX_CONNECTOR_RADIUS );
+	pRender->MoveTo( Vector( vecMins.x + 2 * LOGICAL_BOX_CONNECTOR_RADIUS, flConnectorY, 0.0f ) );
+	pRender->DrawLineTo( Vector( vecBoxMins.x, flConnectorY, 0.0f ) );
+
+	pRender->MoveTo( Vector( vecBoxMaxs.x, flConnectorY, 0.0f ) );
+	pRender->DrawLineTo( Vector( vecMaxs.x - LOGICAL_BOX_ARROW_LENGTH, flConnectorY, 0.0f ) );
+	pRender->DrawLineTo( Vector( vecMaxs.x - LOGICAL_BOX_ARROW_LENGTH, flConnectorY + LOGICAL_BOX_ARROW_HEIGHT, 0.0f ) );
+	pRender->DrawLineTo( Vector( vecMaxs.x, flConnectorY, 0.0f ) );
+	pRender->DrawLineTo( Vector( vecMaxs.x - LOGICAL_BOX_ARROW_LENGTH, flConnectorY - LOGICAL_BOX_ARROW_HEIGHT, 0.0f ) );
+	pRender->DrawLineTo( Vector( vecMaxs.x - LOGICAL_BOX_ARROW_LENGTH, flConnectorY, 0.0f ) );
+
+	// Stop drawing the text once the entity itself gets too small.
+	Vector2D pt, pt2;
+	pRender->GetView()->WorldToClient( pt, Vector( vecBoxMins.x, vecBoxMins.y, 0.0f ) );
+	pRender->GetView()->WorldToClient( pt2, Vector( vecBoxMaxs.x, vecBoxMaxs.y, 0.0f ) );
+	if ( fabs( pt.y - pt2.y ) < 32 )
+		return;
+
+	// Render the entity's name and class name if enabled.
+ 	pRender->SetTextColor( rgbColor.r, rgbColor.g, rgbColor.b );
+
+	// Draw the inputs and outputs
+	const char *pszTargetName = GetKeyValue("targetname");
+	if (pszTargetName != NULL)
+	{
+		pRender->DrawText( pszTargetName, Vector2D( (vecMins.x+vecMaxs.x)/2, vecMaxs.y ), 0, -1, CRender2D::TEXT_JUSTIFY_TOP | CRender2D::TEXT_JUSTIFY_HORZ_CENTER );
+	}
+
+	if ( fabs( pt.y - pt2.y ) < 50 )
+		return;
+
+	const char *pszClassName = GetClassName();
+	if (pszClassName != NULL)
+	{
+		pRender->DrawText( pszClassName, Vector2D( (vecMins.x+vecMaxs.x)/2, vecMins.y ), 0, 1, CRender2D::TEXT_JUSTIFY_BOTTOM | CRender2D::TEXT_JUSTIFY_HORZ_CENTER );
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns whether this entity snaps to half grid or not. Some entities,
@@ -2174,6 +2333,38 @@ bool CMapEntity::HitTest2D(CMapView2D *pView, const Vector2D &point, HitInfo_t &
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Hit test for the logical view
+//-----------------------------------------------------------------------------
+bool CMapEntity::HitTestLogical( CMapViewLogical *pView, const Vector2D &vecPoint, HitInfo_t &hitData )
+{
+	if ( !IsVisible() || !IsLogical() || !IsVisibleLogical() )
+		return false;
+
+	if ( BaseClass::HitTestLogical( pView, vecPoint, hitData ) )
+		return true;
+
+	// Is the point inside the box?
+	Vector2D vecMins;
+	Vector2D vecMaxs;
+	GetRenderLogicalBox( vecMins, vecMaxs );
+
+	Vector2D vecClientMins;
+	Vector2D vecClientMaxs;
+	pView->WorldToClient(vecClientMins, vecMins);
+	pView->WorldToClient(vecClientMaxs, vecMaxs);
+	NormalizeBox( vecClientMins, vecClientMaxs );
+
+	if ( IsPointInside( vecPoint, vecClientMins, vecClientMaxs ) )
+	{
+		hitData.pObject = this;
+		hitData.uData = 0;
+		hitData.nDepth = 0.0f;
+		return true;
+	}
+
+	return false;
+}
 
 //-----------------------------------------------------------------------------
 // Is this logical?
@@ -2184,6 +2375,13 @@ bool CMapEntity::IsLogical(void)
 	return ( pClass && ( pClass->GetInputCount() > 0 || pClass->GetOutputCount() > 0 ) ) || m_Connections.Count() || m_Upstream.Count();
 }
 
+//-----------------------------------------------------------------------------
+// Is it visible in the logical view?
+//-----------------------------------------------------------------------------
+bool CMapEntity::IsVisibleLogical(void)
+{
+	return ( m_EntityTypeFlags & ENTITY_FLAG_HIDE_LOGICAL ) == 0 && IsLogical();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns true if this entity's name matches the given name, considering

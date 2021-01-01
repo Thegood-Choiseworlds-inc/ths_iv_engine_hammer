@@ -29,6 +29,7 @@
 #include "MapInstance.h"
 #include "mapsolid.h"
 #include "mapview2d.h"
+#include "mapviewlogical.h"
 #include "mapview3d.h"
 #include "mapworld.h"
 #include "NewVisGroupDlg.h"
@@ -94,6 +95,7 @@
 
 
 #define MAX_REPLACE_LINE_LENGTH 256
+#define LOGICAL_SPACING 512
 
 #define HALF_LIFE_2_EYE_HEIGHT 64
 
@@ -125,6 +127,8 @@ BEGIN_MESSAGE_MAP(CMapDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_UNGROUP, &ThisClass::OnUpdateEditSelection)
 	ON_COMMAND(ID_VIEW_GRID, &ThisClass::OnViewGrid)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_GRID, &ThisClass::OnUpdateViewGrid)
+	ON_COMMAND(ID_VIEW_LOGICAL_GRID, &ThisClass::OnViewLogicalGrid)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_LOGICAL_GRID, &ThisClass::OnUpdateViewLogicalGrid)
 	ON_COMMAND(ID_EDIT_SELECTALL, &ThisClass::OnEditSelectall)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECTALL, &ThisClass::OnUpdateEditFunction)
 	ON_COMMAND(ID_EDIT_REPLACE, &ThisClass::OnEditReplace)
@@ -142,6 +146,8 @@ BEGIN_MESSAGE_MAP(CMapDoc, CDocument)
 	ON_COMMAND(ID_FILE_RUNMAP, &ThisClass::OnFileRunmap)
 	ON_COMMAND(ID_TOOLS_HIDEITEMS, &ThisClass::OnToolsHideitems)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_HIDEITEMS, &ThisClass::OnUpdateToolsHideitems)
+	ON_COMMAND(ID_VIEW_HIDEUNCONNECTED, &ThisClass::OnViewHideUnconnectedEntities)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_HIDEUNCONNECTED, &ThisClass::OnUpdateViewHideUnconnectedEntities)
 	ON_COMMAND(ID_TOOLS_HIDE_ENTITY_NAMES, &ThisClass::OnToolsHideEntityNames)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_HIDE_ENTITY_NAMES, &ThisClass::OnUpdateToolsHideEntityNames)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, &ThisClass::OnUpdateEditSelection)
@@ -154,6 +160,9 @@ BEGIN_MESSAGE_MAP(CMapDoc, CDocument)
 	ON_COMMAND(ID_EDIT_SELPREV, &ThisClass::OnEditSelprev)
 	ON_COMMAND(ID_EDIT_SELNEXT_CASCADING, &ThisClass::OnEditSelnextCascading)
 	ON_COMMAND(ID_EDIT_SELPREV_CASCADING, &ThisClass::OnEditSelprevCascading)
+	ON_COMMAND(ID_LOGICALOBJECT_MOVETOGETHER, &ThisClass::OnLogicalMoveBlock)
+	ON_COMMAND(ID_LOGICALOBJECT_SELECTALLCASCADING, &ThisClass::OnLogicalSelectAllCascading)
+	ON_COMMAND(ID_LOGICALOBJECT_SELECTALLCONNECTED, &ThisClass::OnLogicalSelectAllConnected)
 	ON_COMMAND_EX(ID_VIEW_HIDESELECTEDOBJECTS, &ThisClass::OnViewHideObjects)
 	ON_COMMAND(ID_MAP_CHECK, &ThisClass::OnMapCheck)
 	ON_COMMAND(ID_VIEW_SHOWCONNECTIONS, &ThisClass::OnViewShowconnections)
@@ -239,6 +248,9 @@ BEGIN_MESSAGE_MAP(CMapDoc, CDocument)
 	ON_COMMAND( ID_TOOLS_DISP_DRAWREMOVEDVERTS, &ThisClass::OnToggleDispDrawRemovedVerts )
 	ON_UPDATE_COMMAND_UI( ID_TOOLS_DISP_DRAWREMOVEDVERTS, &ThisClass::OnUpdateToggleDispDrawRemovedVerts )
 	ON_COMMAND(ID_MAP_DIFFMAPFILE, &ThisClass::OnMapDiff)
+	ON_COMMAND(ID_LOGICALOBJECT_LAYOUTGEOMETRIC, &ThisClass::OnLogicalobjectLayoutgeometric)
+	ON_COMMAND(ID_LOGICALOBJECT_LAYOUTDEFAULT, &ThisClass::OnLogicalobjectLayoutdefault)
+	ON_COMMAND(ID_LOGICALOBJECT_LAYOUTLOGICAL, &ThisClass::OnLogicalobjectLayoutlogical)
 	ON_COMMAND(ID_TOOLS_INSTANCES_HIDE, &ThisClass::OnToolsInstancesHide)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_INSTANCES_HIDE, &ThisClass::OnUpdateToolsInstancesHide)
 	ON_COMMAND(ID_TOOLS_INSTANCES_SHOWTINTED, &ThisClass::OnToolsInstancesShowTinted)
@@ -369,6 +381,15 @@ struct SelectBoxInfo_t
 	SelectMode_t eSelectMode;
 };
 
+struct SelectLogicalBoxInfo_t
+{
+	CMapDoc *pDoc;
+	Vector2D vecMins;
+	Vector2D vecMaxs;
+	bool bInside;
+	SelectMode_t eSelectMode;
+};
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor. Attaches all tools members to this document. Adds this
@@ -410,6 +431,7 @@ CMapDoc::CMapDoc(void)
 	m_bHideItems = false;
 	m_bSnapToGrid = true;
 	m_bShowGrid = true;
+	m_bShowLogicalGrid = false;
 	m_nGridSpacing = Options.view2d.iDefaultGrid;
 	m_bShow3DGrid = false;
 
@@ -519,7 +541,7 @@ CMapDoc::~CMapDoc(void)
 //-----------------------------------------------------------------------------
 void CMapDoc::GetDefaultNewLogicalPosition( Vector2D &vecPosition )
 {
-	constexpr int LOGICAL_SPACING = 512;
+//	constexpr int LOGICAL_SPACING = 512;
 	int nMaxDim = ( g_MAX_MAP_COORD - g_MIN_MAP_COORD ) / LOGICAL_SPACING;
 	int x = m_nLogicalPositionCount / nMaxDim;
 	int y = m_nLogicalPositionCount - x * nMaxDim;
@@ -810,6 +832,7 @@ void CMapDoc::CenterViewsOnSelection()
 
 	Center2DViewsOn(vecCenter);
 	Center3DViewsOn(vecCenter);
+	CenterLogicalViewsOnSelection();
 }
 
 
@@ -836,6 +859,14 @@ void CMapDoc::Center3DViewsOnSelection()
 	Center3DViewsOn( vecCenter );
 }
 
+void CMapDoc::CenterLogicalViewsOnSelection()
+{
+	Vector2D vecLogicalCenter;
+	if ( m_pSelection->GetLogicalBoundsCenter( vecLogicalCenter ) )
+	{
+		CenterLogicalViewsOn(vecLogicalCenter);
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Called after loading a VMF file. Finds the next unique IDs to use
@@ -1923,6 +1954,7 @@ ChunkFileResult_t CMapDoc::LoadViewSettingsKeyCallback(const char *szKey, const 
 {
 	KeyBool( "bSnapToGrid", pDoc->m_bSnapToGrid);
 	KeyBool( "bShowGrid", pDoc->m_bShowGrid);
+	KeyBool( "bShowLogicalGrid", pDoc->m_bShowLogicalGrid);
 	KeyInt( "nGridSpacing", pDoc->m_nGridSpacing);
 	KeyBool( "bShow3DGrid", pDoc->m_bShow3DGrid);
 	KeyInt( "nInstanceVisibility", (int&)pDoc->m_tShowInstance);
@@ -3684,6 +3716,61 @@ static BOOL SelectInBox(CMapClass *pObject, SelectBoxInfo_t *pInfo)
 	return TRUE;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+static BOOL SelectInLogicalBox( CMapClass *pObject, SelectLogicalBoxInfo_t *pInfo)
+{
+	// Skip hidden objects.
+	if ( !pObject->IsVisible() || !pObject->IsLogical() || !pObject->IsVisibleLogical() )
+		return TRUE;
+
+	// FIXME: Box selection doesn't work when this is uncommented. Why?
+	// Skip anything with children. We only are interested in leaf objects because
+	// PrepareSelection will call up to tree to get the proper ancestor.
+//	if ( pObject->GetChildCount() )
+//		return TRUE;
+
+	// Skip groups. Groups are selected via their members through PrepareSelection.
+	if ( pObject->IsGroup() )
+	{
+		// Shouldn't ever have empty groups lying around!
+		// Except if you drag select an empty area!
+//		Assert(false);
+		return TRUE;
+	}
+
+	// Skip clutter helpers.
+	if ( pObject->IsClutter() )
+		return TRUE;
+
+	// FIXME: We're calling PrepareSelection on nearly everything in the world,
+	// then doing the box test against the object that we get back from that!
+	// We should use the octree to cull out most of the world up front.
+	CMapClass *pSelObject = pObject->PrepareSelection(pInfo->eSelectMode);
+	if ( pSelObject )
+	{
+		Vector2D mins, maxs;
+		pObject->GetRenderLogicalBox( mins, maxs );
+
+		bool bSelect;
+		if ( pInfo->bInside )
+		{
+			bSelect = IsBoxInside( mins, maxs, pInfo->vecMins, pInfo->vecMaxs );
+		}
+		else
+		{
+			bSelect = IsBoxIntersecting( mins, maxs, pInfo->vecMins, pInfo->vecMaxs );
+		}
+
+		if (bSelect)
+		{
+			pInfo->pDoc->SelectObject( pSelObject, scSelect );
+		}
+	}
+
+	return TRUE;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -3704,6 +3791,22 @@ void CMapDoc::SelectRegion( BoundBox *pBox, bool bInsideOnly, bool ResetSelectio
 	m_pWorld->EnumChildren(SelectInBox, &info);
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CMapDoc::SelectLogicalRegion( const Vector2D &vecMins, const Vector2D &vecMaxs, bool bInsideOnly)
+{
+	SelectLogicalBoxInfo_t info;
+	info.pDoc = this;
+	info.vecMins = vecMins;
+	info.vecMaxs = vecMaxs;
+	info.bInside = bInsideOnly;
+	info.eSelectMode = m_pSelection->GetMode();
+
+	SelectObject(NULL, scSaveChanges);
+
+	m_pWorld->EnumChildren(SelectInLogicalBox, &info);
+}
 
 bool CMapDoc::SelectObject(CMapClass *pObj, int cmd)
 {
@@ -5430,6 +5533,23 @@ void CMapDoc::OnUpdateViewGrid(CCmdUI *pCmdUI)
 	pCmdUI->SetCheck(m_bShowGrid);
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Toggles the visibility of the grid in the 2D views.
+//-----------------------------------------------------------------------------
+void CMapDoc::OnViewLogicalGrid(void)
+{
+	m_bShowLogicalGrid = !m_bShowLogicalGrid;
+	UpdateAllViews( MAPVIEW_UPDATE_ONLY_LOGICAL );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets the check state of the Show Grid toolbar button and menu item.
+//-----------------------------------------------------------------------------
+void CMapDoc::OnUpdateViewLogicalGrid(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bShowLogicalGrid);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Selects all objects that are not hidden.
@@ -5982,6 +6102,12 @@ void CMapDoc::UpdateTitle(CView *pView)
 		}
 	}
 
+	CMapViewLogical *pViewLogical = dynamic_cast<CMapViewLogical*> (pView);
+	if (pViewLogical != NULL)
+	{
+		pViewType = "Logical";
+	}
+
 	CMapView3D *pView3D = dynamic_cast<CMapView3D*> (pView);
 	if (pView3D != NULL)
 	{
@@ -6089,6 +6215,25 @@ void CMapDoc::OnUpdateToolsHideEntityNames(CCmdUI *pCmdUI)
 	pCmdUI->SetCheck(CMapEntity::GetShowEntityNames() ? FALSE : TRUE);
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Hides and shows entity names in the 2D views.
+//-----------------------------------------------------------------------------
+void CMapDoc::OnViewHideUnconnectedEntities(void)
+{
+	bool bHideUnconnectedEntities = !CMapEntity::GetShowUnconnectedEntities();
+	CMapEntity::ShowUnconnectedEntities(bHideUnconnectedEntities);
+	UpdateAllViews( MAPVIEW_UPDATE_ONLY_LOGICAL );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Manages the state of the Tools | Hide Entity Names menu item.
+//-----------------------------------------------------------------------------
+void CMapDoc::OnUpdateViewHideUnconnectedEntities(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(!GetMainWnd()->IsShellSessionActive());
+	pCmdUI->SetCheck(CMapEntity::GetShowUnconnectedEntities() ? FALSE : TRUE);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -6376,6 +6521,33 @@ void CMapDoc::SetView2dInfo(VIEW2DINFO& vi)
 	}
 }
 
+void CMapDoc::SetViewLogicalInfo(VIEW2DINFO& vi)
+{
+	POSITION p = GetFirstViewPosition();
+	while(p)
+	{
+		CView *pView = GetNextView(p);
+		if(!pView->IsKindOf(RUNTIME_CLASS(CMapViewLogical)))
+			continue;
+
+		CMapViewLogical *pViewLogical = (CMapViewLogical*) pView;
+
+		// set zoom value
+		if(vi.wFlags & VI_ZOOM)
+		{
+			pViewLogical->SetZoom(vi.fZoom);
+		}
+
+		// center on point
+		if(vi.wFlags & VI_CENTER)
+		{
+			pViewLogical->CenterView(&vi.ptCenter);
+		}
+
+		pViewLogical->UpdateView( MAPVIEW_UPDATE_OBJECTS );
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 // Input  : &vec -
@@ -6450,6 +6622,17 @@ void CMapDoc::Set3DViewsPosAng( const Vector &vPos, const Vector &vAng )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CMapDoc::CenterLogicalViewsOn(const Vector2D &vecLogical)
+{
+	VIEW2DINFO vi;
+	vi.wFlags = VI_CENTER;
+	vi.ptCenter = Vector( vecLogical.x, vecLogical.y, 0.0f );
+
+	SetViewLogicalInfo(vi);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Centers the 2D views on selected objects.
@@ -6457,6 +6640,7 @@ void CMapDoc::Set3DViewsPosAng( const Vector &vPos, const Vector &vAng )
 void CMapDoc::OnViewCenterOnSelection(void)
 {
 	Center2DViewsOnSelection();
+	CenterLogicalViewsOnSelection();
 }
 
 
@@ -7101,6 +7285,209 @@ void CMapDoc::OnEditSelprevCascading(void)
 	m_pSelection->SetCurrentHit(hitPrev, true );
 }
 
+//-----------------------------------------------------------------------------
+// Moves selected objects close to each other in logical space
+//-----------------------------------------------------------------------------
+void CMapDoc::OnLogicalMoveBlock(void)
+{
+	Vector2D vecLogicalCenter;
+	if ( !m_pSelection->GetLogicalBoundsCenter( vecLogicalCenter ) )
+		return;
+
+	const CMapObjectList *pSelList = m_pSelection->GetList();
+
+	if ( pSelList->Count() <= 1 )
+		return;
+
+	GetHistory()->MarkUndoPosition( pSelList, "Move Block" );
+	GetHistory()->Keep( pSelList );
+
+	// Lay out in a squarish region that has the same center as the current one
+	int nCount = pSelList->Count();
+	int nDim = sqrt( (float)nCount );
+	if ( nDim * nDim < nCount )
+	{
+		++nDim;
+	}
+
+	CMapViewLogical *pCurrentView = NULL;
+	if ( GetMainWnd()->GetActiveFrame() )
+	{
+		pCurrentView = dynamic_cast<CMapViewLogical*>( GetMainWnd()->GetActiveFrame()->GetActiveView() );
+	}
+
+	bool bCenterView;
+	Vector2D vecPositionCenter;
+	if ( pCurrentView )
+	{
+		Vector vecCenter( COORD_NOTINIT, COORD_NOTINIT, COORD_NOTINIT );
+		pCurrentView->GetCenterPoint( vecCenter );
+		vecPositionCenter = vecCenter.AsVector2D();
+		bCenterView = false;
+	}
+	else
+	{
+		vecPositionCenter = vecLogicalCenter;
+		bCenterView = true;
+	}
+	vecPositionCenter.x -= (nDim / 2.0f) * LOGICAL_SPACING;
+	vecPositionCenter.y -= (nDim / 2.0f) * LOGICAL_SPACING;
+
+	for ( int i = 0; i < pSelList->Count(); ++i )
+	{
+		CMapClass *pClass = pSelList->Element( i );
+		if ( !pClass->IsLogical() )
+			continue;
+
+		int x = i % nDim;
+		int y = ( i / nDim );
+
+		Vector2D newLogicalCenter;
+		newLogicalCenter.x = vecPositionCenter.x + x * LOGICAL_SPACING;
+		newLogicalCenter.y = vecPositionCenter.y + y * LOGICAL_SPACING;
+		pClass->SetLogicalPosition( newLogicalCenter );
+	}
+
+	UpdateAllViews( MAPVIEW_UPDATE_OBJECTS | MAPVIEW_UPDATE_SELECTION | MAPVIEW_UPDATE_ONLY_LOGICAL );
+
+	m_pSelection->SetBoundsDirty();
+
+	if ( bCenterView )
+	{
+		CenterLogicalViewsOnSelection();
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Select all entities connected to outputs of all entities in the selection list recursively
+//-----------------------------------------------------------------------------
+void CMapDoc::OnLogicalSelectAllCascading(void)
+{
+	if ( m_pSelection->IsEmpty() )
+		return;
+
+	const CMapObjectList *pSelList = m_pSelection->GetList();
+
+	GetHistory()->MarkUndoPosition( pSelList, "Select All Cascading" );
+
+	CUtlRBTree< CMapClass*, unsigned short > list( 0, 0, DefLessFunc( CMapClass* ) );
+	for ( int i = 0; i < pSelList->Count(); ++i )
+	{
+		CMapClass *pMapClass = pSelList->Element(i);
+		list.InsertIfNotFound( pMapClass );
+		BuildCascadingSelectionList( pMapClass, list, true );
+	}
+
+	for ( unsigned short h = list.FirstInorder(); h != list.InvalidIndex(); h = list.NextInorder(h) )
+	{
+		SelectObject( list[h], scSelect );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Add all entities connected to inputs of all entities in the selection list recursively
+//-----------------------------------------------------------------------------
+
+void CMapDoc::AddConnectedNodes( CMapClass *pObject, CUtlRBTree< CMapClass*, unsigned short >& visited )
+{
+	// Make sure we havent visited this entity before
+	if ( visited.Find( pObject ) == visited.InvalidIndex() )
+	{
+		// Is this node actually a visible entity?
+		if ( pObject->IsLogical() && pObject->IsVisibleLogical() )
+		{
+			// Is this node NOT a group entity
+			if ( !pObject->IsGroup() )
+			{
+				// Mark this entity visited
+				visited.Insert( pObject );
+
+				// See if this class has any connections
+				CEditGameClass *pClass = dynamic_cast< CEditGameClass * >( pObject );
+				if ( pClass )
+				{
+					// Iterate through each of the upstream connections
+					int nCount = pClass->Upstream_GetCount();
+					for ( int i = 0; i < nCount; ++i )
+					{
+						CEntityConnection *pConn = pClass->Upstream_Get( i );
+
+						// Iterate through the source entities on this connection
+						FOR_EACH_OBJ( *pConn->GetSourceEntityList(), pos )
+						{
+							CMapEntity *pEntity = pConn->GetSourceEntityList()->Element( pos );
+							// Don't bother recursing back into this current node
+							if ( pEntity != pObject )
+							{
+								// Recurse to the adjacent source entity
+								AddConnectedNodes( pEntity, visited );
+							}
+						}
+					}
+
+					// Iterate through each of the downstream connections
+					nCount = pClass->Connections_GetCount();
+					for ( int i = 0; i < nCount; ++i )
+					{
+						CEntityConnection *pConn = pClass->Connections_Get( i );
+
+						// Iterate through the target entities on this connection
+						FOR_EACH_OBJ( *pConn->GetTargetEntityList(), pos )
+						{
+							CMapEntity *pEntity = pConn->GetTargetEntityList()->Element( pos );
+
+							// If you hit this assert it means that an entity was deleted but not removed
+							// from this entity's list of targets.
+							ASSERT( pEntity != NULL );
+
+							// Don't bother recursing back into this current node
+							if ( pEntity && ( pEntity != pObject ) )
+							{
+								// Recurse to the adjacent target entity
+								AddConnectedNodes( pEntity, visited );
+							}
+						}
+					}
+				}
+			}
+
+			// Recurse into any children and add them as well
+			const CMapObjectList *pChildren = pObject->GetChildren();
+			FOR_EACH_OBJ( *pChildren, pos )
+			{
+				AddConnectedNodes( pChildren->Element(pos), visited );
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Select all entities connected to outputs of all entities in the selection list recursively
+//-----------------------------------------------------------------------------
+
+void CMapDoc::OnLogicalSelectAllConnected(void)
+{
+	const CMapObjectList *pSelList = m_pSelection->GetList();
+	int nSelected = pSelList->Count();
+	if ( nSelected )
+	{
+		GetHistory()->MarkUndoPosition( pSelList, "Select All Connected" );
+
+		CUtlRBTree< CMapClass*, unsigned short > visited( 0, 0, DefLessFunc( CMapClass* ) );
+
+		for ( int i = 0; i < nSelected; ++i )
+		{
+			CMapClass *pMapClass = pSelList->Element(i);
+			AddConnectedNodes( pMapClass, visited );
+		}
+
+		for ( unsigned short h = visited.FirstInorder(); h != visited.InvalidIndex(); h = visited.NextInorder(h) )
+		{
+			SelectObject( visited[h], scSelect );
+		}
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Adds all selected or deselected objects to a new VisGroup and hides
@@ -10897,6 +11284,12 @@ ChunkFileResult_t CMapDoc::SaveViewSettingsVMF(CChunkFile *pFile, CSaveInfo *pSa
 	if (eResult != ChunkFile_Ok)
 		return eResult;
 
+#ifndef SDK_BUILD
+	eResult = pFile->WriteKeyValueBool("bShowLogicalGrid", m_bShowLogicalGrid);
+	if (eResult != ChunkFile_Ok)
+		return eResult;
+#endif // SDK_BUILD
+
 	eResult = pFile->WriteKeyValueInt("nGridSpacing", m_nGridSpacing);
 	if (eResult != ChunkFile_Ok)
 		return eResult;
@@ -11325,6 +11718,308 @@ CMapView *CMapDoc::GetActiveMapView()
 
 	}
 	return NULL;
+}
+
+void CMapDoc::OnLogicalobjectLayoutgeometric()
+{
+	Vector2D vecLogicalCenter;
+	if ( !m_pSelection->GetLogicalBoundsCenter( vecLogicalCenter ) )
+		return;
+
+	const CMapObjectList *pSelList = m_pSelection->GetList();
+
+	if ( pSelList->Count() <= 1 )
+		return;
+
+	GetHistory()->MarkUndoPosition( pSelList, "Layout Geometric" );
+	GetHistory()->Keep( pSelList );
+
+	bool bCenterView = false;
+	CMapViewLogical *pCurrentView = NULL;
+	if ( GetMainWnd()->GetActiveFrame() )
+	{
+		pCurrentView = dynamic_cast<CMapViewLogical*>( GetMainWnd()->GetActiveFrame()->GetActiveView() );
+		if ( pCurrentView )
+			bCenterView = true;
+	}
+
+	for ( int i = 0; i < pSelList->Count(); ++i )
+	{
+		CMapClass *pClass = pSelList->Element( i );
+		if ( !pClass->IsLogical() )
+			continue;
+
+		Vector oldCenter;
+		pClass->GetBoundsCenter( oldCenter );
+
+		Vector2D newLogicalCenter;
+		newLogicalCenter.x = oldCenter.x + oldCenter.z/4;
+		newLogicalCenter.y = oldCenter.y + oldCenter.z/4;
+		pClass->SetLogicalPosition( newLogicalCenter );
+	}
+
+	UpdateAllViews( MAPVIEW_UPDATE_OBJECTS | MAPVIEW_UPDATE_SELECTION | MAPVIEW_UPDATE_ONLY_LOGICAL );
+
+	m_pSelection->SetBoundsDirty();
+
+	if ( bCenterView )
+	{
+		CenterLogicalViewsOnSelection();
+	}
+}
+
+
+void CMapDoc::OnLogicalobjectLayoutdefault()
+{
+	Vector2D vecLogicalCenter;
+	if ( !m_pSelection->GetLogicalBoundsCenter( vecLogicalCenter ) )
+		return;
+
+	const CMapObjectList *pSelList = m_pSelection->GetList();
+
+	if ( pSelList->Count() <= 1 )
+		return;
+
+	GetHistory()->MarkUndoPosition( pSelList, "Layout Default" );
+	GetHistory()->Keep( pSelList );
+
+	bool bCenterView = false;
+	CMapViewLogical *pCurrentView = NULL;
+	if ( GetMainWnd()->GetActiveFrame() )
+	{
+		pCurrentView = dynamic_cast<CMapViewLogical*>( GetMainWnd()->GetActiveFrame()->GetActiveView() );
+		if ( pCurrentView )
+			bCenterView = true;
+	}
+
+	m_nLogicalPositionCount = 0;
+	for ( int i = 0; i < pSelList->Count(); ++i )
+	{
+		CMapClass *pClass = pSelList->Element( i );
+		if ( !pClass->IsLogical() )
+			continue;
+
+		Vector2D newLogicalCenter;
+		GetDefaultNewLogicalPosition( newLogicalCenter );
+		pClass->SetLogicalPosition( newLogicalCenter );
+	}
+
+	UpdateAllViews( MAPVIEW_UPDATE_OBJECTS | MAPVIEW_UPDATE_SELECTION | MAPVIEW_UPDATE_ONLY_LOGICAL );
+
+	m_pSelection->SetBoundsDirty();
+
+	if ( bCenterView )
+	{
+		CenterLogicalViewsOnSelection();
+	}
+}
+
+void CMapDoc::OnLogicalobjectLayoutlogical()
+{
+	OnEditSelectall();
+	if ( m_pSelection->IsEmpty() )
+		return;
+
+	/*struct SortHelper
+	{
+		int dist = 0;
+		CMapEntity* current = nullptr;
+		SortHelper* parent = nullptr;
+		CUtlVector<SortHelper*> nextLevel;
+		~SortHelper()
+		{
+			nextLevel.PurgeAndDeleteElements();
+		}
+		void FindAndRemoveRecursive( CMapEntity* pEnt )
+		{
+			if ( auto f = nextLevel.FindMatch( [pEnt]( const SortHelper* h ) { return h->current == pEnt; } ); nextLevel.IsValidIndex( f ) )
+			{
+				delete nextLevel[f];
+				nextLevel.Remove( f );
+			}
+			if ( parent )
+				parent->FindAndRemoveRecursive( pEnt );
+		}
+		bool IsInTree( CMapEntity* pEnt ) const
+		{
+			return pEnt == current || ( parent && parent->IsInTree( pEnt ) );
+		}
+		bool IsA( CMapEntity* pEnt ) const
+		{
+			return nextLevel.FindMatch( [pEnt]( const SortHelper* h ) { return h->current == pEnt || h->IsA( pEnt ); } ) != -1;
+		}
+	};
+	CUtlVector<SortHelper*> topLevel;*/
+	CUtlVector<CMapEntity*> topLevel;
+	CUtlVector<CMapClass*> unconnected;
+
+	const CMapObjectList* pSelList = m_pSelection->GetList();
+
+	GetHistory()->MarkUndoPosition( pSelList, "Layout Logical" );
+	GetHistory()->Keep( pSelList );
+
+	/*const auto& add = []( SortHelper& list, CMapEntity* ent, SortHelper* parent, const auto& f ) -> int
+	{
+		CUtlRBTree<CMapEntity*, unsigned short> visited( 0, 0, DefLessFunc( CMapEntity* ) );
+		list.current = ent;
+		list.parent = parent;
+		for ( int i = 0; i < ent->Connections_GetCount(); ++i )
+		{
+			auto con = ent->Connections_Get( i )->GetTargetEntityList();
+			for ( int j = 0; j < con->Count(); ++j )
+			{
+				auto cur = con->Element( j );
+				if ( list.IsInTree( cur ) )
+					continue;
+				if ( list.parent && list.parent->IsA( cur ) )
+					continue;
+				if ( visited.InsertIfNotFound( cur ) != visited.InvalidIndex() )
+				{
+					list.nextLevel.AddToTail( new SortHelper );
+					list.dist += f( *list.nextLevel.Tail(), cur, &list, f );
+					if ( list.parent )
+						list.parent->FindAndRemoveRecursive( cur );
+				}
+			}
+		}
+		if ( list.parent )
+		{
+			for ( int i = 0; i < list.nextLevel.Count(); ++i )
+				list.parent->FindAndRemoveRecursive( list.nextLevel[i]->current );
+		}
+		list.nextLevel.Sort( []( SortHelper* const* a, SortHelper* const* b ) { return ( *b )->dist - ( *a )->dist; } );
+		list.dist += Max( list.nextLevel.Count() - 1, 0 );
+		return list.dist;
+	};*/
+
+	const auto& processEnt = [&unconnected, &topLevel/*, &add*/]( CMapClass* ent ) -> void
+	{
+		if ( !ent->IsMapClass( MAPCLASS_TYPE( CMapEntity ) ) )
+		{
+			unconnected.AddToTail( ent );
+			return;
+		}
+
+		auto pEnt = static_cast<CMapEntity*>( ent );
+		if ( pEnt->Connections_GetCount() == 0 && pEnt->Upstream_GetCount() == 0 )
+		{
+			unconnected.AddToTail( pEnt );
+			return;
+		}
+
+		if ( pEnt->Upstream_GetCount() == 0 )
+		{
+			/*topLevel.AddToTail( new SortHelper );
+			add( *topLevel.Tail(), pEnt, nullptr, add );*/
+			topLevel.AddToTail( pEnt );
+		}
+	};
+
+	for ( int i = 0; i < pSelList->Count(); ++i )
+	{
+		auto e = pSelList->Element( i );
+		if ( e->IsGroup() )
+		{
+			auto g = static_cast<CMapGroup*>( e )->GetChildren();
+			for ( int j = 0; j < g->Count(); ++j )
+				processEnt( g->Element( j ) );
+			continue;
+		}
+
+		if ( !e->IsLogical() || !e->IsVisibleLogical() )
+			continue;
+
+		processEnt( static_cast<CMapEntity*>( e ) );
+	}
+
+	/*topLevel.Sort( []( SortHelper* const* a, SortHelper* const* b ) { return ( *b )->dist - ( *a )->dist; } );
+	const auto& reposition = []( const Vector2D& pos, const SortHelper& cur, const auto& f ) -> void
+	{
+		cur.current->SetLogicalPosition( pos );
+		const float offs = cur.nextLevel.Count() % 2 ? 0 : LOGICAL_SPACING * 2;
+		const int mult = cur.nextLevel.Count() > 6 ? 6 : 4;
+		if ( cur.nextLevel.Count() % 2 )
+			f( pos + Vector2D( LOGICAL_SPACING * mult, 0 ), *cur.nextLevel[0], f );
+		for ( int i = cur.nextLevel.Count() % 2, m = 1; i < cur.nextLevel.Count(); ++i, m *= -1 )
+			f( pos + Vector2D( LOGICAL_SPACING * mult, ( i / 2 + 1 ) * m * ( LOGICAL_SPACING * 4 ) - m * offs ), *cur.nextLevel[i], f );
+	};
+	int curOffset = 0;
+	for ( int i = 0; i < topLevel.Count(); i++ )
+	{
+		reposition( Vector2D( 0, curOffset * LOGICAL_SPACING * 4 ), *topLevel[i], reposition );
+		curOffset += topLevel[i]->dist + 1;
+	}*/
+
+	const auto& process = []( CUtlVector<CMapEntity*>& stack, const Vector2D& pos, CMapEntity* pEnt, int& offset, int& depth, int cd, const auto& f ) -> void
+	{
+		pEnt->SetLogicalPosition( pos );
+		if ( stack.Find( pEnt ) != -1 )
+			return;
+		stack.AddToTail( pEnt );
+		int total = 0;
+		for ( int i = 0; i < pEnt->Connections_GetCount(); ++i )
+			total += pEnt->Connections_Get( i )->GetTargetEntityList()->Count();
+
+		const int offs = total % 2 ? 0 : LOGICAL_SPACING * 2;
+		const int mult = total > 6 ? 6 : 4;
+		int m = 1, c = 0;
+		CUtlRBTree<CMapEntity*, unsigned short> visited( 0, 0, DefLessFunc( CMapEntity* ) );
+		for ( int i = 0; i < pEnt->Connections_GetCount(); ++i )
+		{
+			auto con = pEnt->Connections_Get( i )->GetTargetEntityList();
+			for ( int j = 0; j < con->Count(); ++j )
+			{
+				auto cur = con->Element( j );
+				if ( visited.InsertIfNotFound( cur ) == visited.InvalidIndex() )
+					continue;
+
+				if ( cur == pEnt )
+					continue;
+
+				if ( c == 0 && total % 2 )
+					f( stack, pos + Vector2D( LOGICAL_SPACING * mult, 0 ), cur, offset, depth, cd + 1, f );
+				else
+					f( stack, pos + Vector2D( LOGICAL_SPACING * mult, ( c / 2 + 1 ) * m * ( LOGICAL_SPACING * 4 ) - m * offs ), cur, offset, depth, cd + 1, f );
+				m *= -1;
+				++c;
+			}
+		}
+		offset = Max( offset, c );
+		depth = Max( depth, cd );
+	};
+
+	int offset = 0, depth = 0, go = 0, gd = 0;
+	for ( int i = 0; i < topLevel.Count(); ++i )
+	{
+		CUtlVector<CMapEntity*> stack;
+		int co = 0, cd = 0;
+		process( stack, Vector2D( ( depth + gd ) * LOGICAL_SPACING * 4, ( offset + go ) * LOGICAL_SPACING * 4 ), topLevel[i], co, cd, 1, process );
+		depth += cd;
+		if ( ( depth % 16 ) == 0 && cd )
+		{
+			depth = 0;
+			gd += 16;
+		}
+		offset += co / 2;
+		if ( ( offset % 32 ) == 0 && ( co / 2 ) )
+		{
+			offset = 0;
+			go += 32;
+		}
+	}
+
+	int nDim = sqrt( static_cast<float>( unconnected.Count() ) );
+	if ( nDim * nDim < unconnected.Count() )
+		++nDim;
+
+	for ( int i = 0; i < unconnected.Count(); ++i )
+	{
+		const int x = 1 + i / nDim;
+		const int y = i % nDim;
+		unconnected[i]->SetLogicalPosition( Vector2D( -x * LOGICAL_SPACING, y * LOGICAL_SPACING ) );
+	}
+
+	//topLevel.PurgeAndDeleteElements();
 }
 
 //-----------------------------------------------------------------------------

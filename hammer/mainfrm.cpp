@@ -22,6 +22,7 @@
 #include "optionproperties.h"
 #include "objectproperties.h"
 #include "mapview2d.h"
+#include "mapviewlogical.h"
 #include "mapview3d.h"
 #include "childfrm.h"
 #include "SearchReplaceDlg.h"
@@ -164,7 +165,8 @@ const int NUMSTATUSPANES = 7;
 enum WinStateViewTypes_t
 {
 	WINSTATE_VIEW_2D = 0,
-	WINSTATE_VIEW_3D
+	WINSTATE_VIEW_3D,
+	WINSTATE_VIEW_LOGICAL
 };
 
 
@@ -1418,6 +1420,11 @@ void CMainFrame::SaveWindowStates()
 				iViewType = WINSTATE_VIEW_3D;
 				iDrawType = ((CMapView3D*)pView)->GetDrawType();
 			}
+			else if (pView->IsKindOf(RUNTIME_CLASS(CMapViewLogical)))
+			{
+				iViewType = WINSTATE_VIEW_LOGICAL;
+				iDrawType = ((CMapViewLogical*)pView)->GetDrawType();
+			}
 			else
 			{
 				//
@@ -1509,6 +1516,9 @@ void CMainFrame::LoadWindowStates()
 				if (iViewType == WINSTATE_VIEW_2D && !pThisView->IsKindOf(RUNTIME_CLASS(CMapView2D)))
 					continue;
 
+				if (iViewType == WINSTATE_VIEW_LOGICAL && !pThisView->IsKindOf(RUNTIME_CLASS(CMapViewLogical)))
+					continue;
+
 				if (iViewType == WINSTATE_VIEW_3D && !pThisView->IsKindOf(RUNTIME_CLASS(CMapView3D)))
 					continue;
 
@@ -1549,7 +1559,7 @@ void CMainFrame::LoadWindowStates()
 			// no redraws right now, please.
 			pFrame->SetRedraw(FALSE);
 
-			if (iViewType == WINSTATE_VIEW_3D || iViewType == WINSTATE_VIEW_2D)
+			if (iViewType == WINSTATE_VIEW_3D || iViewType == WINSTATE_VIEW_2D || iViewType == WINSTATE_VIEW_LOGICAL)
 			{
 				pFrame->SetViewType(iDrawType);
 			}
