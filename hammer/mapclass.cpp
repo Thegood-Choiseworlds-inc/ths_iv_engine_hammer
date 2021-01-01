@@ -1252,6 +1252,14 @@ void CMapClass::DoTransform(const VMatrix &matrix)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Default logical box
+//-----------------------------------------------------------------------------
+void CMapClass::GetRenderLogicalBox( Vector2D &mins, Vector2D &maxs )
+{
+	mins.Init( COORD_NOTINIT, COORD_NOTINIT );
+	maxs.Init( COORD_NOTINIT, COORD_NOTINIT );
+}
 
 const Vector2D& CMapClass::GetLogicalPosition( )
 {
@@ -1303,6 +1311,23 @@ bool CMapClass::HitTest2D(CMapView2D *pView, const Vector2D &point, HitInfo_t &H
 	return bFoundHit;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CMapClass::HitTestLogical(CMapViewLogical *pView, const Vector2D &point, HitInfo_t &hitData)
+{
+	if ( !IsVisibleLogical() )
+		return false;
+
+	FOR_EACH_OBJ( m_Children, pos )
+	{
+		CMapClass *pChild = m_Children.Element(pos);
+		if ( pChild->HitTestLogical(pView, point, hitData) )
+			return true;
+	}
+
+	return false;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Sets the selection state of this object's children.

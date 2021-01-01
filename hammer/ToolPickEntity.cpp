@@ -11,6 +11,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "ToolPickEntity.h"
+#include "mapviewlogical.h"
 #include "mapview3d.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -121,6 +122,49 @@ bool CToolPickEntity::OnLMouseDown3D(CMapView3D *pView, UINT nFlags, const Vecto
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Handles the left mouse button up message in the 3D view.
+// Input  : pView - The view that the event occurred in.
+//			nFlags - Flags per the Windows mouse message.
+//			point - Point in client coordinates where the event occurred.
+// Output : Returns true if the message was handled by the tool, false if not.
+//-----------------------------------------------------------------------------
+bool CToolPickEntity::OnLMouseDownLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint)
+{
+	bool bControl = ((nFlags & MK_CONTROL) != 0);
+
+	HitInfo_t hitData;
+	int nHits = pView->ObjectsAt( vPoint, &hitData, 1 );
+	if ( ( nHits > 0 ) && hitData.pObject )
+	{
+		CMapClass *pSelObject = hitData.pObject->PrepareSelection( selectObjects );
+		CMapEntity *pEntity = dynamic_cast <CMapEntity *>( pSelObject );
+		if (pEntity != NULL)
+		{
+			//
+			// We clicked on an entity.
+			//
+			if ((!m_bAllowMultiSelect) || (!bControl))
+			{
+				// Single select.
+				DeselectAll();
+				SelectEntity(pEntity);
+			}
+			else
+			{
+				// Multiselect.
+				CycleSelectEntity(pEntity);
+			}
+
+			if (m_pNotifyTarget)
+			{
+				m_pNotifyTarget->OnNotifyPickEntity(this);
+			}
+		}
+	}
+
+	return true;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Handles the left mouse button double click message in the 3D view.
@@ -174,6 +218,11 @@ bool CToolPickEntity::OnMouseMove3D(CMapView3D *pView, UINT nFlags, const Vector
 	return true;
 }
 
+bool CToolPickEntity::OnMouseMoveLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint)
+{
+	SetEyedropperCursor();
+	return true;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Sets the cursor to the eyedropper cursor.

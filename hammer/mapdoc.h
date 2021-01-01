@@ -50,6 +50,7 @@ enum
 	// what views should be updated
 	MAPVIEW_UPDATE_ONLY_2D			= 0x020,	// update only 2D views for some reason
 	MAPVIEW_UPDATE_ONLY_3D			= 0x040,	// update only 3D views for some reason
+	MAPVIEW_UPDATE_ONLY_LOGICAL		= 0x080,	// update only Logical views for some reason
 
 	MAPVIEW_OPTIONS_CHANGED			= 0x100,	// view options has been changed
 	MAPVIEW_UPDATE_VISGROUP_STATE	= 0x200,	// a visgroup was hidden or shown.
@@ -186,6 +187,7 @@ class CMapDoc : public CDocument
 		// attribs:
 		bool m_bSnapToGrid;
 		bool m_bShowGrid;
+		bool m_bShowLogicalGrid;
 
 		// pointfile stuff:
 		enum
@@ -351,10 +353,13 @@ class CMapDoc : public CDocument
 		bool SelectObject(CMapClass *pobj, int cmd = scSelect);
 		void SelectObjectList(const CMapObjectList *pList, int cmd = (scSelect|scClear|scSaveChanges) );
 		void SelectRegion( BoundBox *pBox, bool bInsideOnly, bool ResetSelection = true );
+		void SelectLogicalRegion( const Vector2D &vecMins, const Vector2D &vecMaxs, bool bInsideOnly);
 
 		// View centering.
 		void CenterViewsOnSelection();
 		void CenterViewsOn(const Vector &vec);
+		void CenterLogicalViewsOnSelection();
+		void CenterLogicalViewsOn(const Vector2D &vecLogical);
 		void Center2DViewsOnSelection();
 		void Center2DViewsOn(const Vector &vec);
 		void Center3DViewsOnSelection();
@@ -383,6 +388,7 @@ class CMapDoc : public CDocument
 		void UpdateStatusbar();
 		void UpdateStatusBarSnap();
 		void SetView2dInfo(VIEW2DINFO& vi);
+		void SetViewLogicalInfo(VIEW2DINFO& vi);
 		void SetActiveView(CMapView *pViewActivate);
 		void SetUndoActive(bool bActive);
 		void UpdateTitle(CView*);
@@ -743,6 +749,9 @@ class CMapDoc : public CDocument
 		void CenterOriginsRecursive(CMapClass *pObject);
 		void SnapObjectsRecursive(CMapClass *pObject);
 
+		// Add all entities connected to all entities in the selection list recursively
+		void AddConnectedNodes( CMapClass *pClass, CUtlRBTree< CMapClass*, unsigned short >& list );
+
 		//{{AFX_MSG(CMapDoc)
 		afx_msg void OnEditDelete();
 		afx_msg void OnMapSnaptogrid();
@@ -760,6 +769,7 @@ class CMapDoc : public CDocument
 		afx_msg void OnToolsGroup();
 		afx_msg void OnToolsUngroup();
 		afx_msg void OnUpdateViewGrid(CCmdUI* pCmdUI);
+		afx_msg void OnUpdateViewLogicalGrid(CCmdUI* pCmdUI);
 		afx_msg void OnEditSelectall();
 		afx_msg void OnFileSaveAs();
 		afx_msg void OnFileSave();
@@ -772,6 +782,8 @@ class CMapDoc : public CDocument
 		afx_msg void OnEditMapproperties();
 		afx_msg void OnFileRunmap();
 		afx_msg void OnToolsHideitems();
+		afx_msg void OnViewHideUnconnectedEntities();
+		afx_msg void OnUpdateViewHideUnconnectedEntities(CCmdUI* pCmdUI);
 		afx_msg void OnUpdateToolsSubtractselection(CCmdUI* pCmdUI);
 		afx_msg void OnUpdateToolsHideitems(CCmdUI* pCmdUI);
 		afx_msg void OnUpdateEditDelete(CCmdUI* pCmdUI);
@@ -782,6 +794,7 @@ class CMapDoc : public CDocument
 
 		// View menu
 		afx_msg void OnViewGrid();
+		afx_msg void OnViewLogicalGrid();
 		afx_msg void OnViewCenterOnSelection();
 		afx_msg void OnViewCenter3DViewsOnSelection();
 		afx_msg BOOL OnViewHideObjects(UINT nID);
@@ -810,6 +823,12 @@ class CMapDoc : public CDocument
 		afx_msg void OnEditSelprev();
 		afx_msg void OnEditSelnextCascading();
 		afx_msg void OnEditSelprevCascading();
+		afx_msg void OnLogicalMoveBlock();
+		afx_msg void OnLogicalSelectAllCascading();
+		afx_msg void OnLogicalSelectAllConnected();
+		afx_msg void OnLogicalobjectLayoutgeometric();
+		afx_msg void OnLogicalobjectLayoutdefault();
+		afx_msg void OnLogicalobjectLayoutlogical();
 		afx_msg void OnMapCheck();
 		afx_msg void OnUpdateViewShowconnections(CCmdUI* pCmdUI);
 		afx_msg void OnUpdateFileSave(CCmdUI* pCmdUI);

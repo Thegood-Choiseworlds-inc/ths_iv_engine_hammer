@@ -35,6 +35,7 @@ class CMapClass;
 class CMapEntity;
 class CMapSolid;
 class CMapView2D;
+class CMapViewLogical;
 class CMapWorld;
 class CPoint;
 class CRender3D;
@@ -268,6 +269,9 @@ public:
 	virtual void SetLogicalPosition( const Vector2D &vecPosition ) {}
 	virtual const Vector2D& GetLogicalPosition( );
 
+	// NOTE: Logical bounds is in global space
+	virtual void GetRenderLogicalBox( Vector2D &mins, Vector2D &maxs );
+
 	// HACK: temp stuff to ease the transition to not inheriting from BoundBox
 	void GetBoundsCenter(Vector &vecCenter) { m_Render2DBox.GetBoundsCenter(vecCenter); }
 	void GetBoundsSize(Vector &vecSize) { m_Render2DBox.GetBoundsSize(vecSize); }
@@ -294,6 +298,7 @@ public:
 	virtual CMapClass *CopyFrom(CMapClass *pFrom, bool bUpdateDependencies);
 
 	virtual bool HitTest2D(CMapView2D *pView, const Vector2D &point, HitInfo_t &HitData);
+	virtual bool HitTestLogical(CMapViewLogical *pView, const Vector2D &point, HitInfo_t &HitData);
 
 	// Objects that can be clicked on and activated as tools implement this and return a CBaseTool-derived object.
 	virtual CBaseTool *GetToolObject(int nHitData, bool bAttachObject) { return NULL; }
@@ -379,6 +384,9 @@ public:
 	// Is this class potentially visible in 2D visio view?
 	virtual bool IsLogical(void) { return false; }
 
+	// Is this class actually visible in 2D visio view?
+	virtual bool IsVisibleLogical(void) { return false; }
+
 	//
 	// Overridden to set the render color of each of our children.
 	//
@@ -390,6 +398,7 @@ public:
 	//
 	virtual void Render2D(CRender2D *pRender);
 	virtual void Render3D(CRender3D *pRender);
+	virtual void RenderLogical( CRender2D *pRender ) {}
 	virtual bool RenderPreload(CRender3D *pRender, bool bNewContext);
 	inline int GetRenderFrame(void) { return(m_nRenderFrame); }
 	inline void SetRenderFrame(int nRenderFrame) { m_nRenderFrame = nRenderFrame; }

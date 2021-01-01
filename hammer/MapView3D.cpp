@@ -1123,7 +1123,7 @@ void CMapView3D::UpdateView(int nFlags)
 	if ( !m_pRender )
 		return;
 
-	if (nFlags & MAPVIEW_UPDATE_ONLY_2D )
+		if (nFlags & ( MAPVIEW_UPDATE_ONLY_2D | MAPVIEW_UPDATE_ONLY_LOGICAL ) )
 		return;
 
 	//

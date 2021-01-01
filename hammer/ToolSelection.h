@@ -36,7 +36,12 @@ public:
 	void Init( CMapDoc *pDocument );
 
 	inline bool IsBoxSelecting();
+	inline bool IsLogicalBoxSelecting();
 	void EndBoxSelection();
+
+	// Start, end logical selection
+	void StartLogicalBoxSelection( CMapViewLogical *pView, const Vector &vStart );
+	void EndLogicalBoxSelection( );
 
 	// Tool3D implementation.
 	virtual void SetEmpty();
@@ -62,7 +67,15 @@ public:
 	virtual bool OnMouseMove3D(CMapView3D *pView, UINT nFlags, const Vector2D &vPoint);
 
 	virtual void RenderTool2D(CRender2D *pRender);
+	virtual void RenderToolLogical(CRender2D *pRender);
 	virtual void RenderTool3D(CRender3D *pRender);
+
+	virtual bool OnContextMenuLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint);
+	virtual bool OnKeyDownLogical(CMapViewLogical *pView, UINT nChar, UINT nRepCnt, UINT nFlags);
+	virtual bool OnLMouseDownLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint);
+	virtual bool OnLMouseUpLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint);
+	virtual bool OnMouseMoveLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint);
+	virtual bool OnLMouseDblClkLogical(CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint);
 
 	void UpdateSelectionBounds();
 
@@ -71,6 +84,7 @@ public:
 protected:
 
 	void TransformSelection();
+	void TransformLogicalSelection( const Vector2D &vecTranslation );
 
 	void FinishTranslation(bool bSave, bool bClone );
 	void StartTranslation(CMapView *pView, const Vector2D &vPoint, const Vector &vHandleOrigin );
@@ -82,10 +96,19 @@ protected:
 
 	void NudgeObjects(CMapView *pView, int nChar, bool bSnap, bool bClone);
 
+	GDinputvariable *ChooseEyedropperVar(CMapView *pView, CUtlVector<GDinputvariable *> &VarList);
+
 	CMapEntity *FindEntityInTree(CMapClass *pObject);
 
 	void SelectInBox(CMapDoc *pDoc, bool bInsideOnly);
 	CBaseTool *GetToolObject( CMapView2D *pView, const Vector2D &ptScreen, bool bAttach );
+	CBaseTool *GetToolObjectLogical( CMapViewLogical *pView, const Vector2D &vPoint, bool bAttach );
+
+	void SetEyedropperCursor();
+
+	void EyedropperPick2D(CMapView2D *pView, const Vector2D &vPoint);
+	void EyedropperPick3D(CMapView3D *pView, const Vector2D &vPoint);
+	void EyedropperPick(CMapView *pView, CMapClass *pObject);
 
 	void OnEscape(CMapDoc *pDoc);
 
@@ -94,12 +117,31 @@ protected:
 	//
 	virtual int HitTest(CMapView *pView, const Vector2D &pt, bool bTestHandles = false);
 
+	// Methods related to logical operations
+	void EyedropperPickLogical( CMapViewLogical *pView, const Vector2D &vPoint );
+	bool HitTestLogical( CMapView *pView, const Vector2D &ptClient );
+	void SelectInLogicalBox(CMapDoc *pDoc, bool bInsideOnly);
+
 	CSelection	*m_pSelection;	// the documents selection opject
+
+	bool m_bEyedropper;			// True if we are holding down the eyedropper hotkey.
 
 	bool m_bSelected;			// Did we select an object on left button down?
 	bool m_b3DEditMode;			// editing mode in 3D on/off
 
 	bool m_bDrawAsSolidBox;		// sometimes we want to render the tool bbox solid
+	
+	// These are fields related to manipulation in logical views
+	Vector2D m_vLDownLogicalClient;	// Logical client pos at which lbutton was pressed.
+	Vector2D m_vecLogicalSelBoxMins;
+	Vector2D m_vecLogicalSelBoxMaxs;
+	bool m_bInLogicalBoxSelection;	// Are we doing box selection in the logical mode?
+	COLORREF m_clrLogicalBox;		// The color of the logical box
+	Vector2D m_vLastLogicalDragPoint;	// Last point at which we dragged (world coords)
+	Vector2D m_vLogicalTranslation;
+	bool m_bIsLogicalTranslating;	// true while translation in logical view
+	bool m_bLButtonDown;
+	bool m_bLeftDragged;
 };
 
 
@@ -110,5 +152,11 @@ inline bool Selection3D::IsBoxSelecting()
 {
 	return m_bBoxSelection;
 }
+
+inline bool Selection3D::IsLogicalBoxSelecting()
+{
+	return m_bInLogicalBoxSelection;
+}
+
 
 #endif // SELECTION3D_H

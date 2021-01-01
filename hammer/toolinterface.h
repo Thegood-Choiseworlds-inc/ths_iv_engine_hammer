@@ -14,6 +14,7 @@
 
 class CMapView2D;
 class CMapView3D;
+class CMapViewLogical;
 class CRender2D;
 class CRender3D;
 class CMapDoc;
@@ -139,6 +140,22 @@ public:
 	virtual bool OnKeyDown2D( CMapView2D *pView, UINT nChar, UINT nRepCnt, UINT nFlags ) { return false; }
 	virtual bool OnKeyUp2D( CMapView2D *pView, UINT nChar, UINT nRepCnt, UINT nFlags ) { return false; }
 	virtual bool OnChar2D( CMapView2D *pView, UINT nChar, UINT nRepCnt, UINT nFlags ) { return false; }
+
+	//
+	// Messages sent by the logical view:
+	//
+	virtual bool OnContextMenuLogical( CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint) { return false; }
+	virtual bool OnLMouseDownLogical( CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint ) { return false; }
+	virtual bool OnLMouseUpLogical( CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint ) { return false; }
+	virtual bool OnLMouseDblClkLogical( CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint ) { return false; }
+	virtual bool OnRMouseDownLogical( CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint ) { return false; }
+	virtual bool OnRMouseUpLogical( CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint ) { return false; }
+	virtual bool OnMouseMoveLogical( CMapViewLogical *pView, UINT nFlags, const Vector2D &vPoint ) { return true; }
+	virtual bool OnMouseWheelLogical( CMapViewLogical *pView, UINT nFlags, short zDelta, const Vector2D &vPoint) { return false; }
+
+	virtual bool OnKeyDownLogical( CMapViewLogical *pView, UINT nChar, UINT nRepCnt, UINT nFlags ) { return false; }
+	virtual bool OnKeyUpLogical( CMapViewLogical *pView, UINT nChar, UINT nRepCnt, UINT nFlags ) { return false; }
+	virtual bool OnCharLogical( CMapViewLogical *pView, UINT nChar, UINT nRepCnt, UINT nFlags ) { return false; }
 
 	//
 	// Rendering.

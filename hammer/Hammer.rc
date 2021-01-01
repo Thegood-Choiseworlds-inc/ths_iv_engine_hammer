@@ -640,6 +640,7 @@ BEGIN
         MENUITEM "2D &Top (&x/y)",              ID_VIEW_2DXY
         MENUITEM "2D Front (&y/z)",             ID_VIEW_2DYZ
         MENUITEM "2D Side (x/&z)",              ID_VIEW_2DXZ
+        MENUITEM "2D L&ogical",                 ID_VIEW_2DLOGICAL
         MENUITEM SEPARATOR
         MENUITEM "3D &Wireframe",               ID_VIEW_3DWIREFRAME
         MENUITEM "3D &Flat",                    ID_VIEW_3DPOLYGON
@@ -657,6 +658,29 @@ BEGIN
     POPUP "Origin Handle"
     BEGIN
         MENUITEM "&Center on Entity",           ID_CENTER_ON_ENTITY
+    END
+    POPUP "Logical Object"
+    BEGIN
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUTWC
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPYWC
+        MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTEWC
+        MENUITEM SEPARATOR
+        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
+        MENUITEM "&Redo\tCtrl+Y",               ID_EDIT_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "&Group\tCtrl+G",              ID_TOOLS_GROUP
+        MENUITEM "&Ungroup\tCtrl+U",            ID_TOOLS_UNGROUP
+        MENUITEM SEPARATOR
+        MENUITEM "Select All Connected",        ID_LOGICALOBJECT_SELECTALLCONNECTED
+        MENUITEM "Select All Cascading",        ID_LOGICALOBJECT_SELECTALLCASCADING
+        MENUITEM SEPARATOR
+        MENUITEM "Layout D&efault",             ID_LOGICALOBJECT_LAYOUTDEFAULT
+        MENUITEM "Layout &Block",               ID_LOGICALOBJECT_MOVETOGETHER
+        MENUITEM "Layout Ge&ometric",           ID_LOGICALOBJECT_LAYOUTGEOMETRIC
+        MENUITEM "Layout Schematic (TBD)",      ID_LOGICALOBJECT_LAYOUTLOGICAL
+        MENUITEM SEPARATOR
+        MENUITEM "&Properties",                 ID_EDIT_PROPERTIES
     END
 END
 
@@ -3793,6 +3817,17 @@ STRINGTABLE
 BEGIN
     ID_VIEW_PREVIEW_MODEL_FADE 
                             "Turns on or off model fade preview in the 3D view.\nToggle model fade preview"
+    ID_VIEW_2DLOGICAL       "View 2D Logic\n2D Logical View"
+    ID_LOGICALVIEWSETTINGS_HIDEORPHANENTITIES 
+                            "Show/hide entities that have no connections"
+    ID_LOGICALOBJECT_MOVETOGETHER 
+                            "Move all selected entities close to each other"
+    ID_LOGICALOBJECT_SELECTCASCADING 
+                            "Select entity along with all entities connected via outputs"
+    ID_LOGICALOBJECT_SELECTALLCASCADING 
+                            "Select all elements connected to outputs recursively"
+    ID_LOGICALOBJECT_SELECTALLCONNECTED 
+                            "Select all entities connected to inputs or outputs recursively"
 END
 
 STRINGTABLE

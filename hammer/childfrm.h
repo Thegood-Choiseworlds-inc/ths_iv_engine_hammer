@@ -70,6 +70,7 @@ protected:
 	afx_msg void OnView2dxy();
 	afx_msg void OnView2dyz();
 	afx_msg void OnView2dxz();
+	afx_msg void OnViewLogical();
 	afx_msg void OnView3dPolygon();
 	afx_msg void OnView3dTextured();
 	afx_msg void OnView3dTexturedShaded();

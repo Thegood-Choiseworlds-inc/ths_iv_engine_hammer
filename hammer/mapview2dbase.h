@@ -83,6 +83,7 @@ protected:
 	DECLARE_DYNCREATE(CMapView2DBase)
 
 	// Derived classes must implement these
+	virtual bool IsLogical() { return false; }
 	virtual void OnRenderListDirty() {}
 
 // Overrides
@@ -100,6 +101,7 @@ protected:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
+	void DrawGridLogical( CRender2D *pRender );
 	void DrawGrid( CRender2D *pRender, int xAxis, int yAxis, float depth, bool bNoSmallGrid = false );
 	CRender2D *GetRender();
 	CTitleWnd *GetTitleWnd();

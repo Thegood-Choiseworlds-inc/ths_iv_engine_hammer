@@ -30,6 +30,7 @@ class CMapGroup : public CMapClass
 
 		// Groups have to be treated as logical because they potentially have logical children
 		virtual bool IsLogical(void) { return true; }
+		virtual bool IsVisibleLogical(void) { return IsVisible(); }
 
 		void AddChild(CMapClass *pChild);
 		void AddVisGroup(CVisGroup *pVisGroup);
@@ -37,6 +38,7 @@ class CMapGroup : public CMapClass
 		// NOTE: Logical position is in global space
 		virtual void SetLogicalPosition( const Vector2D &vecPosition );
 		virtual const Vector2D& GetLogicalPosition( );
+		virtual void GetRenderLogicalBox( Vector2D &mins, Vector2D &maxs );
 
 		//
 		// Serialization.

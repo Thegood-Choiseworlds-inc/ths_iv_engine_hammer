@@ -48,6 +48,9 @@ class CMapSprite : public CMapHelper
 		void Render2D(CRender2D *pRender);
 		void Render3D(CRender3D *pRender);
 
+		// Called by entity code to render sprites
+		void RenderLogicalAt(CRender2D *pRender, const Vector2D &vecMins, const Vector2D &vecMaxs );
+
 		void GetAngles(QAngle &Angles);
 
 		static void SetRenderDistance(float fRenderDistance);

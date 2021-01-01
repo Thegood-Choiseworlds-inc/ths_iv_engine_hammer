@@ -83,6 +83,8 @@ public:
 
 	bool GetBoundsCenter(Vector &vecCenter);
 	void GetLastValidBounds(Vector &vecMins, Vector &vecMaxs);
+	bool GetLogicalBounds(Vector2D &vecMins, Vector2D &vecMaxs);
+	bool GetLogicalBoundsCenter( Vector2D &vecCenter );
 
 	void SetBoundsDirty() {m_bBoundsDirty = true;}
 
@@ -98,6 +100,9 @@ protected:
 
 	BoundBox	m_Bounds;				// current bounds
 	BoundBox	m_LastValidBounds;		// last valid selection bounds
+
+	Vector2D m_vecLogicalMins;		// Selection bounds in "logical" space
+	Vector2D m_vecLogicalMaxs;
 
 	// Hit selection.
 	CMapObjectList	m_HitList; // list of 'hit' object (potential selected object)

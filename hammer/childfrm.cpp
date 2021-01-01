@@ -21,6 +21,7 @@
 #include "childfrm.h"
 #include "mapdoc.h"
 #include "mapview2d.h"
+#include "mapviewlogical.h"
 #include "mapview3d.h"
 #include "globalfunctions.h"
 #include "materialdlg.h"
@@ -42,6 +43,7 @@ BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWnd)
 	ON_COMMAND(ID_VIEW_2DXY, &ThisClass::OnView2dxy)
 	ON_COMMAND(ID_VIEW_2DYZ, &ThisClass::OnView2dyz)
 	ON_COMMAND(ID_VIEW_2DXZ, &ThisClass::OnView2dxz)
+	ON_COMMAND(ID_VIEW_2DLOGICAL, &ThisClass::OnViewLogical)
 	ON_COMMAND(ID_VIEW_3DPOLYGON, &ThisClass::OnView3dPolygon)
 	ON_COMMAND(ID_VIEW_3DTEXTURED, &ThisClass::OnView3dTextured)
 	ON_COMMAND(ID_VIEW_3DTEXTURED_SHADED, &ThisClass::OnView3dTexturedShaded)
@@ -413,6 +415,10 @@ void CChildFrame::SetViewType(DrawType_t eViewType)
 			pNewView = (CMapView2D *)ReplaceView(RUNTIME_CLASS(CMapView2D));
 			break;
 
+		case VIEW_LOGICAL:
+			pNewView = (CMapViewLogical *)ReplaceView(RUNTIME_CLASS(CMapViewLogical));
+			break;
+
 		default:
 		case VIEW3D_WIREFRAME:
 		case VIEW3D_POLYGON:
@@ -462,6 +468,13 @@ void CChildFrame::OnView2dxz(void)
 	SetViewType(VIEW2D_XZ);
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Handles the ID_VIEW_2DLOGICAL command when the active view is a 3D view.
+//-----------------------------------------------------------------------------
+void CChildFrame::OnViewLogical(void)
+{
+	SetViewType(VIEW_LOGICAL);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Handles the ID_VIEW_3DWIREFRAME command when the active view is a 2D view.
@@ -593,6 +606,12 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext *pContext)
 					case VIEW2D_YZ:
 					{
 						m_wndSplitter->CreateView(nRow, nCol, RUNTIME_CLASS(CMapView2D), sizeView, pContext);
+						break;
+					}
+
+					case VIEW_LOGICAL:
+					{
+						m_wndSplitter->CreateView(nRow, nCol, RUNTIME_CLASS(CMapViewLogical), sizeView, pContext);
 						break;
 					}
 
