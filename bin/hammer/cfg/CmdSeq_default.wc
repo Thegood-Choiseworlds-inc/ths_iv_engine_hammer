@@ -22,7 +22,7 @@
 		{
 			"enabled"		"1"
 			"ensure_check"		"0"
-			"params"		"-noambientocclusion -game $gamedir $path\$file"
+			"params"		"-game $gamedir $path\$file"
 			"run"		"$light_exe"
 			"special_cmd"		"0"
 		}
@@ -64,7 +64,7 @@
 		{
 			"enabled"		"1"
 			"ensure_check"		"0"
-			"params"		"-noambientocclusion -bounce 2 -noextra -game $gamedir $path\$file"
+			"params"		"-bounce 2 -noextra -game $gamedir $path\$file"
 			"run"		"$light_exe"
 			"special_cmd"		"0"
 		}
