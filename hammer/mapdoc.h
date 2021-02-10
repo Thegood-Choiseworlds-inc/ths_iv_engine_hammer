@@ -30,6 +30,8 @@ class CMapView2D;
 class CRender;
 class CManifest;
 
+bool m_bShowSkyMain = false;
+
 struct FindEntity_t;
 struct FindGroup_t;
 struct AddNonSelectedInfo_t;
@@ -863,6 +865,8 @@ class CMapDoc : public CDocument
 		afx_msg void OnFileExporttodxf();
 		afx_msg void OnUpdateEditApplytexture(CCmdUI* pCmdUI);
 		afx_msg void OnMapLoadpointfile();
+		afx_msg void OnMapLoadskyView();
+		afx_msg void OnMapUnloadskyView();
 		afx_msg void OnMapUnloadpointfile();
 		afx_msg void OnMapLoadportalfile();
 		afx_msg void OnMapUnloadportalfile();

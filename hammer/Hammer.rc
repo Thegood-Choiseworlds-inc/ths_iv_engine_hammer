@@ -414,6 +414,8 @@ BEGIN
         MENUITEM "&Unload Pointfile",           ID_MAP_UNLOADPOINTFILE
         MENUITEM "&Load Portal File",           ID_MAP_LOADPORTALFILE
         MENUITEM "&Unload Portal File",         ID_MAP_UNLOADPORTALFILE
+        MENUITEM "Load Sky Material to View",             ID_MAP_LOADSKYVIEW
+        MENUITEM "&Unload Sky Material to View",             ID_MAP_UNLOADSKYVIEW
         MENUITEM SEPARATOR
         MENUITEM "Show &Information",           ID_MAP_INFORMATION
         MENUITEM "&Map Properties...",          ID_EDIT_MAPPROPERTIES

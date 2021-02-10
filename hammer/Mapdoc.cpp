@@ -220,6 +220,8 @@ BEGIN_MESSAGE_MAP(CMapDoc, CDocument)
 	ON_COMMAND(ID_TOOLS_CENTER_ORIGINS, &ThisClass::OnToolsCenterOrigins)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_CENTER_ORIGINS, &ThisClass::OnUpdateEditSelection)
 	ON_COMMAND(ID_MAP_LOADPOINTFILE, &ThisClass::OnMapLoadpointfile)
+	ON_COMMAND(ID_MAP_LOADSKYVIEW, &ThisClass::OnMapLoadskyView)
+	ON_COMMAND(ID_MAP_UNLOADSKYVIEW, &ThisClass::OnMapUnloadskyView)
 	ON_COMMAND(ID_MAP_UNLOADPOINTFILE, &ThisClass::OnMapUnloadpointfile)
 	ON_COMMAND(ID_MAP_LOADPORTALFILE, &ThisClass::OnMapLoadportalfile)
 	ON_COMMAND(ID_MAP_UNLOADPORTALFILE, &ThisClass::OnMapUnloadportalfile)
@@ -9605,6 +9607,37 @@ void CMapDoc::OnMapUnloadpointfile(void)
 {
 	m_PFPoints.Purge();
 	UpdateAllViews( MAPVIEW_UPDATE_ONLY_2D );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CMapDoc::OnMapLoadskyView(void)
+{
+	if ( m_bShowSkyMain )
+	{
+		Msg("SkyMaterial is already loaded. To Unload SkyMaterial - Press Unload Sky Material to View\n");
+	}
+	else
+	{
+		m_bShowSkyMain = true;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CMapDoc::OnMapUnloadskyView(void)
+{
+	if ( m_bShowSkyMain == false )
+	{
+		Msg("SkyMaterial is already unloaded. To Load SkyMaterial - Press Load Sky Material to View\n");
+	}
+	else
+	{
+		m_bShowSkyMain = false;
+	}
 }
 
 

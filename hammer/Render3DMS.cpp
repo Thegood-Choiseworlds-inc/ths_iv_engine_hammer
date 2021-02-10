@@ -729,6 +729,8 @@ static bool LoadSky( const char *skyname, IMaterial* skyboxMaterials[6] )
 
 void CRender3D::RenderSkybox()
 {
+	if ( m_bShowSkyMain )
+	{
 	if ( m_eCurrentRenderMode != RENDER_MODE_TEXTURED_SHADED && m_eCurrentRenderMode != RENDER_MODE_TEXTURED )
 		return;
 
@@ -817,6 +819,7 @@ void CRender3D::RenderSkybox()
 			meshBuilder.End();
 			pMesh->Draw();
 		}
+	}
 	}
 }
 
