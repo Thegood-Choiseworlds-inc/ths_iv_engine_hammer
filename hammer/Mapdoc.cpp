@@ -3391,6 +3391,10 @@ void CMapDoc::OnCloseDocument(void)
 
 	CDocument::OnCloseDocument();
 	DiscordUpdatePresence();
+	
+	ClosefileDir = m_strPathName;
+	
+	Msg(mwStatus, "Closed %s", ClosefileDir);
 }
 
 

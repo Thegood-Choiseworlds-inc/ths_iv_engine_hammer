@@ -191,6 +191,8 @@ class CMapDoc : public CDocument
 		bool m_bShowGrid;
 		bool m_bShowLogicalGrid;
 
+		LPCTSTR ClosefileDir;
+
 		// pointfile stuff:
 		enum
 		{
