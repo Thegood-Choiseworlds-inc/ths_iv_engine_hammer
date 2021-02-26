@@ -2010,6 +2010,12 @@ void COP_Output::AddEntityOutputs(CMapEntity *pEntity)
 			return;
 		}
 
+		pMapInstance->GetInstancedMap()->FindEntitiesByClassName( entityList, "iv_logic_io_proxy", false );
+		if ( entityList.Count() != 1 )
+		{
+			return;
+		}
+
 		CMapEntity *pInstanceParmsEntity = entityList.Element( 0 );
 		const char *pszTargetName = pInstanceParmsEntity->GetKeyValue( "targetname" );
 
@@ -2299,6 +2305,12 @@ CMapEntity *COP_Output::GetTargetInstanceIOProxy()
 					CMapEntityList entityList;
 
 					pMapInstance->GetInstancedMap()->FindEntitiesByClassName( entityList, "func_instance_io_proxy", false );
+					if ( entityList.Count() == 1 )
+					{
+						return entityList.Element( 0 );
+					}
+					
+					pMapInstance->GetInstancedMap()->FindEntitiesByClassName( entityList, "iv_logic_io_proxy", false );
 					if ( entityList.Count() == 1 )
 					{
 						return entityList.Element( 0 );
