@@ -2007,13 +2007,11 @@ void COP_Output::AddEntityOutputs(CMapEntity *pEntity)
 		pMapInstance->GetInstancedMap()->FindEntitiesByClassName( entityList, "func_instance_io_proxy", false );
 		if ( entityList.Count() != 1 )
 		{
-			return;
-		}
-
-		pMapInstance->GetInstancedMap()->FindEntitiesByClassName( entityList, "iv_logic_io_proxy", false );
-		if ( entityList.Count() != 1 )
-		{
-			return;
+			pMapInstance->GetInstancedMap()->FindEntitiesByClassName( entityList, "iv_logic_io_proxy", false );
+			if ( entityList.Count() != 1 )
+			{
+				return;
+			}
 		}
 
 		CMapEntity *pInstanceParmsEntity = entityList.Element( 0 );
