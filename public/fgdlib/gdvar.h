@@ -40,6 +40,8 @@ enum GDIV_TYPE
 	ivFloat,
 	ivMaterial,
 	ivScene,
+ 	ivScript,
+	ivScriptList,
 	ivSide,			// One brush face ID.
 	ivSideList,		// One or more brush face IDs, space delimited.
 	ivOrigin,		// The origin of an entity, in the form "x y z".
