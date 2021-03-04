@@ -21,6 +21,9 @@
 #include "ToolPickEntity.h"
 #include "toolpickface.h"
 #include "FilteredComboBox.h"
+#include "ModelBrowser.h"
+#include "dlglistmanage.h"
+#include "particlebrowser.h"
 
 
 class CEditGameClass;
@@ -167,7 +170,7 @@ private:
 };
 
 
-class COP_Entity : public CObjectPage, CFilteredComboBox::ICallbacks, public CColoredListCtrl::IItemColorCallback
+class COP_Entity : public CObjectPage, CFilteredComboBox::ICallbacks, public CColoredListCtrl::IItemColorCallback, public IDlgListManageBrowse
 {
 	DECLARE_DYNCREATE(COP_Entity)
 	typedef CObjectPage BaseClass;
@@ -236,6 +239,10 @@ class COP_Entity : public CObjectPage, CFilteredComboBox::ICallbacks, public CCo
 
 		virtual void GetItemColor( int iItem, COLORREF *pBackgroundColor, COLORREF *pTextColor );
 		virtual bool CustomDrawItemValue( const LPDRAWITEMSTRUCT p, const RECT *pRect );
+
+	// Implementation of IDlgListManageBrowse
+
+		virtual bool HandleBrowse( CStringList &lstBrowse );
 
 	// Other functions.
 

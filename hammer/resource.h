@@ -182,6 +182,7 @@
 #define IDB_MANIFEST_ICONS              348
 #define IDR_MANIFEST_FILTER             349
 #define IDD_MANIFEST_MAP                350
+#define IDD_MANAGE_LIST_DIALOG          344
 #define IDD_DISP_PAINT_SCULPT           351
 #define IDD_DISP_SCULPT_PUSH_OPTIONS    352
 #define IDD_DISP_SCULPT_PROJECT_OPTIONS 353

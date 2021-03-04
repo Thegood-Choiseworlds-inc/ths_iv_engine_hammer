@@ -37,6 +37,7 @@
 #include "options.h"
 #include "op_flags.h"
 #include "MapInstance.h"
+#include "dlglistmanage.h"
 #include "fmtstr.h"
 #include "smartptr.h"
 #include "particlebrowser.h"
@@ -1215,6 +1216,91 @@ int COP_Entity::GetKeyValueRowByShortName( const char *pShortName )
 	return m_VarList.FindItem( &fi );
 }
 
+class CStringListTokenizer
+{
+public:
+	explicit CStringListTokenizer( char const *szString );
+
+	char const * NextToken();
+	char const * CurrentToken() const;
+
+	static inline char Separator() { return ' '; }
+	static void TrimPrefixes( char *pszBuffer, char const *pszPrefix );
+
+protected:
+	CArrayAutoPtr< char > m_pString;
+	char *m_pNextToken;
+	char *m_pCurrentToken;
+};
+
+CStringListTokenizer::CStringListTokenizer(const char *szString) :
+	m_pNextToken( NULL ),
+	m_pCurrentToken( NULL )
+{
+	if ( szString )
+	{
+		size_t len = strlen( szString );
+		m_pString.Attach( new char[ len + 1 ] );
+		strcpy( m_pString.Get(), szString );
+		m_pNextToken = m_pString.Get();
+		m_pCurrentToken = NULL;
+	}
+}
+
+char const * CStringListTokenizer::NextToken()
+{
+	char const chSeparator = Separator();
+	while ( m_pNextToken &&
+		*m_pNextToken &&
+		*m_pNextToken == chSeparator )
+		++ m_pNextToken;
+
+	if ( !m_pNextToken || !*m_pNextToken )
+		return NULL;
+
+	char *pNextToken = strchr( m_pNextToken, chSeparator );
+	if ( pNextToken )
+	{
+		*pNextToken = 0;
+		m_pCurrentToken = m_pNextToken;
+		m_pNextToken = pNextToken + 1;
+	}
+	else
+	{
+		m_pCurrentToken = m_pNextToken;
+		m_pNextToken = NULL;
+	}
+	
+	return CurrentToken();
+}
+
+char const * CStringListTokenizer::CurrentToken() const
+{
+	return m_pCurrentToken;
+}
+
+void CStringListTokenizer::TrimPrefixes( char *pszBuffer, char const *pszPrefix )
+{
+	char *pszResult = pszBuffer;
+	char *pszResultEnd = pszBuffer + strlen( pszBuffer );
+
+	char const *szPrefix = pszPrefix;
+	int lenPrefix = strlen( szPrefix );
+
+	while ( pszResult < pszResultEnd )
+	{
+		if ( StringHasPrefix( pszResult, szPrefix ) )
+		{
+			memmove( pszResult, pszResult + lenPrefix, pszResultEnd + 1 - ( pszResult + lenPrefix ) );
+		}
+		pszResult = strchr( pszResult, Separator() );
+		if ( !pszResult )
+			break;
+		else
+			++ pszResult;
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Fills the values in the second column for all properties.
@@ -1255,9 +1341,8 @@ void COP_Entity::RefreshKVListValues( const char *pOnlyThisVar )
 								pValue = pTestValue;
 						}
 					}
-					else if (
-						(eType == ivStudioModel) || (eType == ivSprite) || (eType == ivSound) || (eType == ivDecal) ||
-						(eType == ivMaterial) || (eType == ivScene) )
+					else if ((eType == ivStudioModel) || (eType == ivSprite) || (eType == ivSound) || (eType == ivDecal) ||
+							 (eType == ivMaterial) || (eType == ivScene) || (eType == ivScript ))
 					{
 						// It's a filename.. just show the filename and not the directory. They can look at the
 						// full filename in the smart control if they want.
@@ -1266,6 +1351,30 @@ void COP_Entity::RefreshKVListValues( const char *pOnlyThisVar )
 						{
 							Q_strncpy( tmpValueBuf, pLastSlash+1, sizeof( tmpValueBuf ) );
 							pValue = tmpValueBuf;
+						}
+					}					
+					else if ( eType == ivScriptList )
+					{
+						// Show filenames on the list
+						CStringListTokenizer lstScripts( pUnformattedValue );
+						char *pchFill = tmpValueBuf;
+						while ( char const *szEntry = lstScripts.NextToken() )
+						{
+							const char *pLastSlash = max( strrchr( szEntry, '\\' ), strrchr( szEntry, '/' ) );
+							if ( !pLastSlash )
+								pLastSlash = szEntry;
+							else
+								++ pLastSlash;
+
+							if ( pchFill != tmpValueBuf )
+								*( pchFill ++ ) = ' ';
+
+							Q_strncpy( pchFill, pLastSlash, tmpValueBuf + sizeof( tmpValueBuf ) - pchFill );
+							pchFill += strlen( pLastSlash );
+							pValue = tmpValueBuf;
+
+							if ( pchFill >= tmpValueBuf + sizeof( tmpValueBuf ) )
+							break;
 						}
 					}
 				}
@@ -1880,16 +1989,17 @@ void COP_Entity::CreateSmartControls(GDinputvariable *pVar, CUtlVector<const cha
 		//
 		// Create a "Browse..." button for browsing for files.
 		//
-		if (eType == ivStudioModel || eType == ivSprite || eType == ivSound || eType == ivDecal ||
-			eType == ivMaterial || eType == ivScene || eType == ivParticleSystem || eType == ivInstanceFile)
+		if ( (eType == ivStudioModel) || (eType == ivSprite) || (eType == ivSound) || (eType == ivDecal) ||
+			 (eType == ivMaterial) || (eType == ivScene) || (eType == ivScript) || (eType == ivScriptList) ||
+			 (eType == ivParticleSystem) || ( eType == ivInstanceFile ) )
 		{
 			CreateSmartControls_BrowseAndPlayButtons( pVar, ctrlrect, hControlFont );
 		}
-		else if (eType == ivTargetDest || eType == ivTargetNameOrClass || eType == ivTargetSrc || eType == ivNodeDest)
+		else if ((eType == ivTargetDest) || (eType == ivTargetNameOrClass) || (eType == ivTargetSrc) || (eType == ivNodeDest))
 		{
 			CreateSmartControls_MarkAndEyedropperButtons( pVar, ctrlrect, hControlFont );
 		}
-		else if (eType == ivSide || eType == ivSideList)
+		else if ((eType == ivSide) || (eType == ivSideList))
 		{
 			CreateSmartControls_PickButton( pVar, ctrlrect, hControlFont );
 		}
@@ -2143,15 +2253,15 @@ void COP_Entity::CreateSmartControls_BasicEditControl( GDinputvariable *pVar, CR
 	pEdit->m_bColor = pVar->GetType() == ivColor1 || pVar->GetType() == ivColor255;
 	pEdit->m_bColor255 = pVar->GetType() == ivColor255;
 	ctrlrect.bottom += 2;
-	pEdit->CreateEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_TABSTOP | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
+	pEdit->CreateEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_TABSTOP | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, 
 		ctrlrect.left, ctrlrect.top, ctrlrect.Width(), ctrlrect.Height(), GetSafeHwnd(), HMENU(IDC_SMARTCONTROL));
-	pEdit->SendMessage(WM_SETFONT, (WPARAM)hControlFont);
+  	pEdit->SendMessage(WM_SETFONT, (WPARAM)hControlFont);
 
 	const char *pValue = m_kv.GetValue( pVar->GetName() );
 	if ( pValue )
 		pEdit->SetWindowText( pValue );
 
-	if (pVar->IsReadOnly() || pVar->GetType() == ivFlags)
+	if (pVar->IsReadOnly())
 	{
 		pEdit->EnableWindow(FALSE);
 	}
@@ -2164,9 +2274,9 @@ void COP_Entity::CreateSmartControls_BasicEditControl( GDinputvariable *pVar, CR
 			CRect ButtonRect = ctrlrect;
 			ButtonRect.top = ctrlrect.bottom + 4;
 			ButtonRect.bottom = ctrlrect.bottom + ctrlrect.Height() + 4;
-			ButtonRect.right = ButtonRect.left + 32;
-			CMapDoc *pDoc = CMapDoc::GetActiveMapDoc();
-			CMapView3D *pView = pDoc->GetFirst3DView();
+			ButtonRect.right = ButtonRect.left + 32;	
+			CMapDoc *pDoc = CMapDoc::GetActiveMapDoc();		
+			CMapView3D *pView = pDoc->GetFirst3DView();					
 			int disabled = 0;
 			if ( !pView )
 			{
@@ -2207,25 +2317,38 @@ void COP_Entity::CreateSmartControls_BrowseAndPlayButtons( GDinputvariable *pVar
 		message = (HMENU)IDC_BROWSE_INSTANCE;
 	}
 
-	CButton *pButton = new CButton;
-	pButton->CreateEx(0, "Button", "Browse...", WS_TABSTOP | WS_CHILD | WS_VISIBLE,
-		ButtonRect.left, ButtonRect.top, ButtonRect.Width(), ButtonRect.Height(),
-		GetSafeHwnd(), message);
-	pButton->SendMessage(WM_SETFONT, (WPARAM)hControlFont);
-	m_pSmartBrowseButton = pButton;
 	auto layout = GetDynamicLayout();
+	if ( pVar->GetType() != ivScriptList )
+	{
+		CButton *pButton = new CButton;
+		pButton->CreateEx(0, "Button", "Browse...", WS_TABSTOP | WS_CHILD | WS_VISIBLE, 
+			ButtonRect.left, ButtonRect.top, ButtonRect.Width(), ButtonRect.Height(), 
+			GetSafeHwnd(), message);
+		pButton->SendMessage(WM_SETFONT, (WPARAM)hControlFont);
+		m_pSmartBrowseButton = pButton;
 
-	m_SmartControls.AddToTail(pButton);
 	layout->AddItem( pButton->GetSafeHwnd(), CMFCDynamicLayout::MoveHorizontal( 100 ), CMFCDynamicLayout::SizeNone() );
+		m_SmartControls.AddToTail(pButton);
+	}
 
 	if ( pVar->GetType() == ivSound || pVar->GetType() == ivScene )
 	{
 		ButtonRect.left = ButtonRect.right + 8;
 		ButtonRect.right = ButtonRect.left + 54;
 
-		pButton = new CButton;
-		pButton->CreateEx(0, "Button", "Play", WS_TABSTOP | WS_CHILD | WS_VISIBLE,
-			ButtonRect.left, ButtonRect.top, ButtonRect.Width(), ButtonRect.Height(),
+		CButton *pButton = new CButton;
+		pButton->CreateEx(0, "Button", "Play", WS_TABSTOP | WS_CHILD | WS_VISIBLE, 
+			ButtonRect.left, ButtonRect.top, ButtonRect.Width(), ButtonRect.Height(), 
+			GetSafeHwnd(), (HMENU)IDC_PLAY_SOUND);
+		pButton->SendMessage(WM_SETFONT, (WPARAM)hControlFont);
+
+		m_SmartControls.AddToTail(pButton);
+	}
+	else if ( pVar->GetType() == ivScriptList )
+	{
+		CButton *pButton = new CButton;
+		pButton->CreateEx(0, "Button", "Manage...", WS_TABSTOP | WS_CHILD | WS_VISIBLE, 
+			ButtonRect.left, ButtonRect.top, ButtonRect.Width(), ButtonRect.Height(), 
 			GetSafeHwnd(), (HMENU)IDC_PLAY_SOUND);
 		pButton->SendMessage(WM_SETFONT, (WPARAM)hControlFont);
 
@@ -2253,7 +2376,7 @@ void COP_Entity::CreateSmartControls_MarkAndEyedropperButtons( GDinputvariable *
 		ButtonRect.right = ButtonRect.left + 48;
 
 		pButton = new CButton;
-		pButton->CreateEx(0, "Button", "Mark", WS_TABSTOP | WS_CHILD | WS_VISIBLE,
+		pButton->CreateEx(0, "Button", "Mark", WS_TABSTOP | WS_CHILD | WS_VISIBLE, 
 			ButtonRect.left, ButtonRect.top, ButtonRect.Width(), ButtonRect.Height(),
 			GetSafeHwnd(), (HMENU)IDC_MARK);
 		pButton->SendMessage(WM_SETFONT, (WPARAM)hControlFont);
@@ -3558,6 +3681,9 @@ void COP_Entity::SetFlagsPage( const char* flagName, COP_Flags* pFlagsPage )
 //-----------------------------------------------------------------------------
 void COP_Entity::OnPlaySound(void)
 {
+	if ( m_eEditType == ivScriptList )
+		OnManageList();
+
 	if ( m_eEditType != ivSound && m_eEditType != ivScene )
 		return;
 
@@ -3579,6 +3705,19 @@ void COP_Entity::OnPlaySound(void)
 		g_Sounds.Play( type, nIndex );
 }
 
+void COP_Entity::OnManageList()
+{
+	CDlgListManage dlg( this, this, m_pObjectList );
+	int nResult = dlg.DoModal();
+	if ( nResult == IDOK )
+	{
+		// Have the dialog commit changes
+		dlg.SaveScriptChanges();
+		
+		// Mark it as changed
+		GetMainWnd()->pObjectProperties->MarkDataDirty();
+	}
+}
 
 // Filesystem dialog module wrappers.
 CSysModule *g_pFSDialogModule = 0;
@@ -3721,6 +3860,29 @@ void COP_Entity::OnBrowse(void)
 			break;
 		}
 
+		case ivScript:
+		{
+			static char szInitialDir[MAX_PATH] = "scripts\\vscripts";
+			pszInitialDir = szInitialDir;
+
+			pDlg->AddFileMask( "*.nut" );
+			pDlg->AddFileMask( "*.gm" );
+			pDlg->SetInitialDir( pszInitialDir, pPathID );
+			break;
+		}
+
+		case ivScriptList:
+		{
+			static char szInitialDir[MAX_PATH] = "scripts\\vscripts";
+			pszInitialDir = szInitialDir;
+
+			pDlg->AddFileMask( "*.nut" );
+			pDlg->AddFileMask( "*.gm" );
+			pDlg->SetInitialDir( pszInitialDir, pPathID );
+//			pDlg->AllowMultiSelect( true );
+			break;
+		}
+
 		case ivSound:
 		{
 			CString currentValue;
@@ -3756,8 +3918,11 @@ void COP_Entity::OnBrowse(void)
 
 		default:
 		{
+			static char szInitialDir[MAX_PATH] = ".";
+			pszInitialDir = szInitialDir;
+
 			pDlg->AddFileMask( "*.*" );
-			pDlg->SetInitialDir( ".", pPathID );
+			pDlg->SetInitialDir( pszInitialDir, pPathID );
 			break;
 		}
 	}
@@ -3798,6 +3963,11 @@ void COP_Entity::OnBrowse(void)
 		{
 			Q_FixSlashes( szResultBuffer, '/' );
 
+			if ( m_eEditType == ivScriptList )
+			{
+				CStringListTokenizer::TrimPrefixes( szResultBuffer, "vscripts/" );
+			}
+
 			m_pSmartControl->SetWindowText( szResultBuffer );
 		}
 	}
@@ -3805,6 +3975,61 @@ void COP_Entity::OnBrowse(void)
 Cleanup:;
 	pDlg->Release();
 }
+
+bool COP_Entity::HandleBrowse( CStringList &lstBrowse )
+{
+	if ( m_eEditType != ivScriptList )
+		return false;
+
+	if ( !g_FSDialogFactory )
+		return false;
+
+	IFileSystemOpenDialog *pDlg;
+	pDlg = (IFileSystemOpenDialog*)g_FSDialogFactory( FILESYSTEMOPENDIALOG_VERSION, NULL );
+	if ( !pDlg )
+	{
+		char str[512];
+		Q_snprintf( str, sizeof( str ), "Can't create %s interface.", FILESYSTEMOPENDIALOG_VERSION );
+		AfxMessageBox( str, MB_OK );
+		return false;
+	}
+	pDlg->Init( g_Factory, NULL );
+
+	pDlg->AddFileMask( "*.nut" );
+	pDlg->AddFileMask( "*.gm" );
+//	pDlg->AllowMultiSelect( true );
+
+	int ret;
+	if ( g_pFullFileSystem->IsSteam() || CommandLine()->FindParm( "-NewDialogs" ) )
+		ret = pDlg->DoModal();
+	else
+		ret = pDlg->DoModal_WindowsDialog();
+
+	if ( ret == IDOK )
+	{
+		int numResultCharsNeeded = 512;
+		CArrayAutoPtr< char > szResultBuffer( new char[ numResultCharsNeeded ] );
+		pDlg->GetFilename( szResultBuffer.Get(), numResultCharsNeeded );
+
+		Q_FixSlashes( szResultBuffer.Get(), '/' );
+
+		if ( m_eEditType == ivScriptList )
+		{
+			CStringListTokenizer::TrimPrefixes( szResultBuffer.Get(), "vscripts/" );
+		}
+
+		CStringListTokenizer lstScripts( szResultBuffer.Get() );
+		while ( char const *szEntry = lstScripts.NextToken() )
+		{
+			lstBrowse.AddTail( szEntry );
+		}
+	}
+
+	pDlg->Release();
+
+	return true;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: this function will display a file dialog to locate an instance vmf.
