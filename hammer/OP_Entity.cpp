@@ -3965,7 +3965,7 @@ void COP_Entity::OnBrowse(void)
 
 			if ( m_eEditType == ivScriptList )
 			{
-				CStringListTokenizer::TrimPrefixes( szResultBuffer, "vscripts/" );
+				CStringListTokenizer::TrimPrefixes( szResultBuffer, "scripts/vscripts/" );
 			}
 
 			m_pSmartControl->SetWindowText( szResultBuffer );
@@ -4015,7 +4015,7 @@ bool COP_Entity::HandleBrowse( CStringList &lstBrowse )
 
 		if ( m_eEditType == ivScriptList )
 		{
-			CStringListTokenizer::TrimPrefixes( szResultBuffer.Get(), "vscripts/" );
+			CStringListTokenizer::TrimPrefixes( szResultBuffer.Get(), "scripts/vscripts/" );
 		}
 
 		CStringListTokenizer lstScripts( szResultBuffer.Get() );
