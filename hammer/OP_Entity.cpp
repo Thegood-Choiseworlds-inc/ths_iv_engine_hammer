@@ -3866,6 +3866,7 @@ void COP_Entity::OnBrowse(void)
 			pszInitialDir = szInitialDir;
 
 			pDlg->AddFileMask( "*.nut" );
+			pDlg->AddFileMask( "*.txt" );
 			pDlg->AddFileMask( "*.gm" );
 			pDlg->SetInitialDir( pszInitialDir, pPathID );
 			break;
@@ -3877,6 +3878,7 @@ void COP_Entity::OnBrowse(void)
 			pszInitialDir = szInitialDir;
 
 			pDlg->AddFileMask( "*.nut" );
+			pDlg->AddFileMask( "*.txt" );
 			pDlg->AddFileMask( "*.gm" );
 			pDlg->SetInitialDir( pszInitialDir, pPathID );
 //			pDlg->AllowMultiSelect( true );
@@ -3996,6 +3998,7 @@ bool COP_Entity::HandleBrowse( CStringList &lstBrowse )
 	pDlg->Init( g_Factory, NULL );
 
 	pDlg->AddFileMask( "*.nut" );
+	pDlg->AddFileMask( "*.txt" );
 	pDlg->AddFileMask( "*.gm" );
 //	pDlg->AllowMultiSelect( true );
 
