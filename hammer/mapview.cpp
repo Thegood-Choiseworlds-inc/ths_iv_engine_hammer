@@ -93,7 +93,6 @@ bool CMapView::ShouldRender()
 	if ( m_bUpdateView )
 	{
 		m_dwTimeLastRender = dwTimeNow;
-		m_nRenderedFrames++;
 		return true;
 	}
 
