@@ -82,9 +82,9 @@ bool CMapView::ShouldRender()
 	
 		float flFrameRate = (1000.0f / dwTimeElapsed);
 
-		if (flFrameRate > 120.0f)
+		if (flFrameRate > 200.0f)
 		{
-			// never update view faster then 120Hz
+			// never update view faster then 200Hz
 			return false;
 		}
 	}
