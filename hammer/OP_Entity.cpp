@@ -1342,7 +1342,7 @@ void COP_Entity::RefreshKVListValues( const char *pOnlyThisVar )
 						}
 					}
 					else if ((eType == ivStudioModel) || (eType == ivSprite) || (eType == ivSound) || (eType == ivDecal) ||
-							 (eType == ivMaterial) || (eType == ivScene) || (eType == ivScript ))
+							 (eType == ivMaterial) || (eType == ivScene) || (eType == ivScript ) || (eType == ivCCFile ))
 					{
 						// It's a filename.. just show the filename and not the directory. They can look at the
 						// full filename in the smart control if they want.
@@ -1991,7 +1991,7 @@ void COP_Entity::CreateSmartControls(GDinputvariable *pVar, CUtlVector<const cha
 		//
 		if ( (eType == ivStudioModel) || (eType == ivSprite) || (eType == ivSound) || (eType == ivDecal) ||
 			 (eType == ivMaterial) || (eType == ivScene) || (eType == ivScript) || (eType == ivScriptList) ||
-			 (eType == ivParticleSystem) || ( eType == ivInstanceFile ) )
+			 (eType == ivParticleSystem) || ( eType == ivInstanceFile ) || (eType == ivCCFile) )
 		{
 			CreateSmartControls_BrowseAndPlayButtons( pVar, ctrlrect, hControlFont );
 		}
@@ -3868,6 +3868,16 @@ void COP_Entity::OnBrowse(void)
 			pDlg->AddFileMask( "*.nut" );
 			pDlg->AddFileMask( "*.txt" );
 			pDlg->AddFileMask( "*.gm" );
+			pDlg->SetInitialDir( pszInitialDir, pPathID );
+			break;
+		}
+
+		case ivCCFile:
+		{
+			static char szInitialDir[MAX_PATH] = "materials\\correction";
+			pszInitialDir = szInitialDir;
+
+			pDlg->AddFileMask( "*.raw" );
 			pDlg->SetInitialDir( pszInitialDir, pPathID );
 			break;
 		}

@@ -47,6 +47,7 @@ static constexpr const TypeMap_t TypeMap[] =
 	{ ivScene,				"scene",				STRING },
 	{ ivScript,				"script",				STRING },
 	{ ivScriptList,			"scriptlist",			STRING },
+	{ ivCCFile,			"cc_file",			STRING }, //thsdev_new_cc_browse_method
 	{ ivSide,				"side",					STRING },
 	{ ivSideList,			"sidelist",				STRING },
 	{ ivOrigin,				"origin",				STRING },

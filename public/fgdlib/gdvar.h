@@ -42,6 +42,7 @@ enum GDIV_TYPE
 	ivScene,
  	ivScript,
 	ivScriptList,
+	ivCCFile, //thsdev_new_cc_browse_method
 	ivSide,			// One brush face ID.
 	ivSideList,		// One or more brush face IDs, space delimited.
 	ivOrigin,		// The origin of an entity, in the form "x y z".
