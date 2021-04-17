@@ -62,6 +62,10 @@ BEGIN_SHADER_FLAGS( screenspace_special, "Help for screenspace_general", SHADER_
 		SHADER_PARAM( TCSIZE5, SHADER_PARAM_TYPE_INTEGER, "0", "Number of components in texture coord5" )
 		SHADER_PARAM( TCSIZE6, SHADER_PARAM_TYPE_INTEGER, "0", "Number of components in texture coord6" )
 		SHADER_PARAM( TCSIZE7, SHADER_PARAM_TYPE_INTEGER, "0", "Number of components in texture coord7" )
+		SHADER_PARAM( POINTSAMPLE_BASETEXTURE, SHADER_PARAM_TYPE_INTEGER, "0", "" )
+		SHADER_PARAM( POINTSAMPLE_TEXTURE1, SHADER_PARAM_TYPE_INTEGER, "0", "" )
+		SHADER_PARAM( POINTSAMPLE_TEXTURE2, SHADER_PARAM_TYPE_INTEGER, "0", "" )
+		SHADER_PARAM( POINTSAMPLE_TEXTURE3, SHADER_PARAM_TYPE_INTEGER, "0", "" )
 	    SHADER_PARAM( CULL, SHADER_PARAM_TYPE_INTEGER, "0", "Culling control - 0 = nocull, 1 = do cull" )
 	    SHADER_PARAM( DEPTHTEST, SHADER_PARAM_TYPE_INTEGER, "0", "Enable Depthtest" )
 	    SHADER_PARAM( COPYALPHA, SHADER_PARAM_TYPE_INTEGER, "0", "")
@@ -270,18 +274,26 @@ BEGIN_SHADER_FLAGS( screenspace_special, "Help for screenspace_general", SHADER_
 			if (params[BASETEXTURE]->IsDefined())
 			{
 				BindTexture( SHADER_SAMPLER0, BASETEXTURE );
+				if ( params[POINTSAMPLE_BASETEXTURE]->GetIntValue() )
+					pShaderAPI->SetTextureFilterMode( SHADER_SAMPLER0, TFILTER_MODE_POINTSAMPLED );
 			}
 			if (params[TEXTURE1]->IsDefined())
 			{
 				BindTexture( SHADER_SAMPLER1, TEXTURE1, -1 );
+				if ( params[POINTSAMPLE_TEXTURE1]->GetIntValue() )
+					pShaderAPI->SetTextureFilterMode( SHADER_SAMPLER1, TFILTER_MODE_POINTSAMPLED );
 			}
 			if (params[TEXTURE2]->IsDefined())
 			{
 				BindTexture( SHADER_SAMPLER2, TEXTURE2, -1 );
+				if ( params[POINTSAMPLE_TEXTURE2]->GetIntValue() )
+					pShaderAPI->SetTextureFilterMode( SHADER_SAMPLER2, TFILTER_MODE_POINTSAMPLED );
 			}
 			if (params[TEXTURE3]->IsDefined())
 			{
 				BindTexture( SHADER_SAMPLER3, TEXTURE3, -1 );
+				if ( params[POINTSAMPLE_TEXTURE3]->GetIntValue() )
+					pShaderAPI->SetTextureFilterMode( SHADER_SAMPLER3, TFILTER_MODE_POINTSAMPLED );
 			}
 			float c0[]={
 				params[C0_X]->GetFloatValue(),

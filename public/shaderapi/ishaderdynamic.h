@@ -144,6 +144,10 @@ struct ShaderViewport_t
 	}
 };
 
+enum TextureFilterMode_t
+{
+	TFILTER_MODE_POINTSAMPLED = 1,
+};
 
 //-----------------------------------------------------------------------------
 // The Shader interface versions
@@ -334,6 +338,8 @@ public:
 	// Interface for mat system to tell shaderapi about color correction
 	virtual void GetCurrentColorCorrection( ShaderColorCorrectionInfo_t* pInfo ) = 0;
 
+	// allows overriding texture filtering mode on an already bound texture.
+	virtual void SetTextureFilterMode( Sampler_t sampler, TextureFilterMode_t nMode ) = 0;
 	virtual void SetPSNearAndFarZ( int pshReg ) = 0;
 
 	virtual void SetDepthFeatheringPixelShaderConstant( int iConstant, float fDepthBlendScale ) = 0;
