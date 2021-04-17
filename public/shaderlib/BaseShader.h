@@ -135,6 +135,9 @@ public:
 	// Gets at the current materialvar flags
 	int CurrentMaterialVarFlags() const;
 
+	// Gets at the current materialvar2 flags
+	int CurrentMaterialVarFlags2() const;
+
 	// Finds a particular parameter	(works because the lowest parameters match the shader)
 	int FindParamIndex( const char *pName ) const;
 
@@ -235,6 +238,14 @@ private:
 inline int CBaseShader::CurrentMaterialVarFlags() const
 {
 	return s_ppParams[FLAGS]->GetIntValue();
+}
+
+//-----------------------------------------------------------------------------
+// Gets at the current materialvar2 flags
+//-----------------------------------------------------------------------------
+inline int CBaseShader::CurrentMaterialVarFlags2() const
+{
+	return s_ppParams[FLAGS2]->GetIntValue();
 }
 
 //-----------------------------------------------------------------------------
