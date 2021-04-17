@@ -30,6 +30,7 @@
 #include "options.h"
 #include "statusbarids.h"
 #include "titlewnd.h"
+#include "Gizmo.h"
 #include "ToolManager.h"
 #include "hammer.h"
 #include "mathlib/vector.h"

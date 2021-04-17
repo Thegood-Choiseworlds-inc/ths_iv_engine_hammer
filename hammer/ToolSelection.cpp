@@ -5,6 +5,7 @@
 //===========================================================================//
 
 #include "stdafx.h"
+#include "Gizmo.h"
 #include "globalfunctions.h"		// FIXME: For NotifyDuplicates
 #include "history.h"
 #include "mainfrm.h"
