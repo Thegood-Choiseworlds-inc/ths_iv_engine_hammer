@@ -269,12 +269,14 @@ CMeshBuilder* CBaseShader::MeshBuilder()
 //-----------------------------------------------------------------------------
 void CBaseShader::LoadTexture( int nTextureVar, int nAdditionalCreationFlags )
 {
-	if ( !s_ppParams || nTextureVar == -1 )
+	if ((!s_ppParams) || (nTextureVar == -1))
 		return;
 
 	IMaterialVar* pNameVar = s_ppParams[nTextureVar];
 	if ( pNameVar && pNameVar->IsDefined() )
+	{
 		s_pShaderInit->LoadTexture( pNameVar, s_pTextureGroupName, nAdditionalCreationFlags );
+	}
 }
 
 
@@ -283,12 +285,14 @@ void CBaseShader::LoadTexture( int nTextureVar, int nAdditionalCreationFlags )
 //-----------------------------------------------------------------------------
 void CBaseShader::LoadBumpMap( int nTextureVar )
 {
-	if ( !s_ppParams || nTextureVar == -1 )
+	if ((!s_ppParams) || (nTextureVar == -1))
 		return;
 
 	IMaterialVar* pNameVar = s_ppParams[nTextureVar];
 	if ( pNameVar && pNameVar->IsDefined() )
+	{
 		s_pShaderInit->LoadBumpMap( pNameVar, s_pTextureGroupName );
+	}
 }
 
 
@@ -297,12 +301,14 @@ void CBaseShader::LoadBumpMap( int nTextureVar )
 //-----------------------------------------------------------------------------
 void CBaseShader::LoadCubeMap( int nTextureVar, int nAdditionalCreationFlags )
 {
-	if ( !s_ppParams || nTextureVar == -1 )
+	if ((!s_ppParams) || (nTextureVar == -1))
 		return;
 
 	IMaterialVar* pNameVar = s_ppParams[nTextureVar];
 	if ( pNameVar && pNameVar->IsDefined() )
+	{
 		s_pShaderInit->LoadCubeMap( s_ppParams, pNameVar, nAdditionalCreationFlags );
+	}
 }
 
 
@@ -313,9 +319,9 @@ ShaderAPITextureHandle_t CBaseShader::GetShaderAPITextureBindHandle( int nTextur
 	Assert ( s_ppParams );
 
 	IMaterialVar* pTextureVar = s_ppParams[nTextureVar];
-	IMaterialVar* pFrameVar = nFrameVar != -1 ? s_ppParams[nFrameVar] : nullptr;
+	IMaterialVar* pFrameVar = (nFrameVar != -1) ? s_ppParams[nFrameVar] : nullptr;
 	const int nFrame = pFrameVar ? pFrameVar->GetIntValue() : 0;
-	return GetShaderAPITextureBindHandle( pTextureVar->GetTextureValue(), nFrame, nTextureChannel );
+	return GetShaderSystem()->GetShaderAPITextureBindHandle( pTextureVar->GetTextureValue(), nFrame, nTextureChannel );
 }
 
 ShaderAPITextureHandle_t CBaseShader::GetShaderAPITextureBindHandle( ITexture* pTexture, int nFrame, int nTextureChannel )
@@ -401,19 +407,35 @@ bool CBaseShader::TextureIsTranslucent( int textureVar, bool isBaseTexture )
 		return false;
 
 	IMaterialVar** params = s_ppParams;
-	if ( params[textureVar]->GetType() == MATERIAL_VAR_TYPE_TEXTURE )
+	if (params[textureVar]->GetType() == MATERIAL_VAR_TYPE_TEXTURE)
 	{
-		if ( !isBaseTexture )
+		if (!isBaseTexture)
+		{
 			return params[textureVar]->GetTextureValue()->IsTranslucent();
+		}
 		else
 		{
 			// Override translucency settings if this flag is set.
-			if ( IS_FLAG_SET( MATERIAL_VAR_OPAQUETEXTURE ) )
+			if (IS_FLAG_SET(MATERIAL_VAR_OPAQUETEXTURE))
 				return false;
 
-			const int flags = CurrentMaterialVarFlags();
-			if ( ( flags & ( MATERIAL_VAR_SELFILLUM | MATERIAL_VAR_BASEALPHAENVMAPMASK ) ) == 0 && ( flags & MATERIAL_VAR_TRANSLUCENT || flags & MATERIAL_VAR_ALPHATEST ) )
-				return params[textureVar]->GetTextureValue()->IsTranslucent();
+			bool bHasSelfIllum				= ( ( CurrentMaterialVarFlags() & MATERIAL_VAR_SELFILLUM ) != 0 );
+			bool bHasSelfIllumMask			= ( ( CurrentMaterialVarFlags2() & MATERIAL_VAR2_SELFILLUMMASK ) != 0 );
+			bool bHasBaseAlphaEnvmapMask	= ( ( CurrentMaterialVarFlags() & MATERIAL_VAR_BASEALPHAENVMAPMASK ) != 0 );
+			bool bUsingBaseTextureAlphaForSelfIllum = bHasSelfIllum && !bHasSelfIllumMask;
+			// Check if we are using base texture alpha for something other than translucency.
+			if ( !bUsingBaseTextureAlphaForSelfIllum && !bHasBaseAlphaEnvmapMask )
+			{
+				// We aren't using base alpha for anything other than trancluceny.
+
+				// check if the material is marked as translucent or alpha test.
+				if ((CurrentMaterialVarFlags() & MATERIAL_VAR_TRANSLUCENT) ||
+					(CurrentMaterialVarFlags() & MATERIAL_VAR_ALPHATEST))
+				{
+					// Make sure the texture has an alpha channel.
+					return params[textureVar]->GetTextureValue()->IsTranslucent();
+				}
+			}
 		}
 	}
 
@@ -704,12 +726,16 @@ void CBaseShader::SetAdditiveBlendingShadowState( int textureVar, bool isBaseTex
 		EnableAlphaBlending( SHADER_BLEND_ONE, SHADER_BLEND_ONE );
 }
 
-void CBaseShader::SetDefaultBlendingShadowState( int textureVar, bool isBaseTexture )
+void CBaseShader::SetDefaultBlendingShadowState( int textureVar, bool isBaseTexture ) 
 {
 	if ( CurrentMaterialVarFlags() & MATERIAL_VAR_ADDITIVE )
+	{
 		SetAdditiveBlendingShadowState( textureVar, isBaseTexture );
+	}
 	else
+	{
 		SetNormalBlendingShadowState( textureVar, isBaseTexture );
+	}
 }
 
 void CBaseShader::SetBlendingShadowState( BlendType_t nMode )
