@@ -744,14 +744,9 @@ ChunkFileResult_t CMapEntity::LoadHiddenCallback(CChunkFile *pFile, CMapEntity *
 
 ChunkFileResult_t CMapEntity::LoadEditorKeyCallback( const char *szKey, const char *szValue, CMapEntity *pMapEntity )
 {
-	if ( !stricmp( szKey, "logicalpos" ) || m_bResetLGView == true )
+	if ( !stricmp( szKey, "logicalpos" ) )
 	{
 		CChunkFile::ReadKeyValueVector2(szValue, pMapEntity->m_vecLogicalPosition );
-		if( m_bResetLGView == true )
-		{
-			m_bResetLGView = false;
-			Msg("Resseting logical View Done!!!\n");
-		}
 		return ChunkFile_Ok;
 	}
 
@@ -1160,7 +1155,7 @@ void CMapEntity::PostloadWorld(CMapWorld *pWorld)
 
 	// Set a reasonable default
 	Vector2D vecLogicalPos = GetLogicalPosition();
-	if ( vecLogicalPos.x == COORD_NOTINIT )
+	if ( vecLogicalPos.x == COORD_NOTINIT || m_bResetLGView == true )
 	{
 		CMapDoc::GetActiveMapDoc()->GetDefaultNewLogicalPosition( vecLogicalPos );
 		SetLogicalPosition( vecLogicalPos );
@@ -1170,6 +1165,12 @@ void CMapEntity::PostloadWorld(CMapWorld *pWorld)
 	// Call in all our children (some of which were created above).
 	//
 	CMapClass::PostloadWorld(pWorld);
+
+	if( m_bResetLGView == true )
+	{
+		m_bResetLGView = false;
+		Msg("Resseting logical View Done!!!\n");
+	}
 
 	CalculateTypeFlags();
 }
