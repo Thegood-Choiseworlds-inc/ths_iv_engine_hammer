@@ -83,7 +83,7 @@ IMPLEMENT_DYNAMIC(CModelBrowser, CVguiDialog)
 CModelBrowser::CModelBrowser(CWnd* pParent /*=NULL*/)
 	: CVguiDialog(CModelBrowser::IDD, pParent)
 {
-	m_pPicker = new CMDLPicker( NULL, CMDLPicker::PAGE_RENDER | CMDLPicker::PAGE_SKINS | CMDLPicker::PAGE_SEQUENCES | CMDLPicker::PAGE_ACTIVITIES | CMDLPicker::PAGE_INFO );
+	m_pPicker = new CMDLPicker( NULL );
 	m_pStatusLine = new vgui::TextEntry( NULL, "StatusLine" );
 
 	m_pButtonOK = new vgui::Button( NULL, "OpenButton", "OK" );
