@@ -416,6 +416,7 @@ BEGIN
         MENUITEM "&Unload Portal File",         ID_MAP_UNLOADPORTALFILE
         MENUITEM "Load Sky Material to View",             ID_MAP_LOADSKYVIEW
         MENUITEM "&Unload Sky Material to View",             ID_MAP_UNLOADSKYVIEW
+        MENUITEM "Reset Logical Positions for map entities",             ID_MAP_RESET_LG_VIEW
         MENUITEM SEPARATOR
         MENUITEM "Show &Information",           ID_MAP_INFORMATION
         MENUITEM "&Map Properties...",          ID_EDIT_MAPPROPERTIES

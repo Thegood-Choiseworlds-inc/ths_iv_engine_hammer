@@ -31,6 +31,7 @@ class CRender;
 class CManifest;
 
 bool m_bShowSkyMain = false;
+bool m_bResetLGView = false;
 
 struct FindEntity_t;
 struct FindGroup_t;
@@ -869,6 +870,7 @@ class CMapDoc : public CDocument
 		afx_msg void OnMapLoadpointfile();
 		afx_msg void OnMapLoadskyView();
 		afx_msg void OnMapUnloadskyView();
+		afx_msg void OnPressedLGViewResset();
 		afx_msg void OnMapUnloadpointfile();
 		afx_msg void OnMapLoadportalfile();
 		afx_msg void OnMapUnloadportalfile();

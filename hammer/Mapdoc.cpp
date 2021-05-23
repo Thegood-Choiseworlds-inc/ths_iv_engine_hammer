@@ -222,6 +222,7 @@ BEGIN_MESSAGE_MAP(CMapDoc, CDocument)
 	ON_COMMAND(ID_MAP_LOADPOINTFILE, &ThisClass::OnMapLoadpointfile)
 	ON_COMMAND(ID_MAP_LOADSKYVIEW, &ThisClass::OnMapLoadskyView)
 	ON_COMMAND(ID_MAP_UNLOADSKYVIEW, &ThisClass::OnMapUnloadskyView)
+	ON_COMMAND(ID_MAP_RESET_LG_VIEW, &ThisClass::OnPressedLGViewResset)
 	ON_COMMAND(ID_MAP_UNLOADPOINTFILE, &ThisClass::OnMapUnloadpointfile)
 	ON_COMMAND(ID_MAP_LOADPORTALFILE, &ThisClass::OnMapLoadportalfile)
 	ON_COMMAND(ID_MAP_UNLOADPORTALFILE, &ThisClass::OnMapUnloadportalfile)
@@ -9641,6 +9642,23 @@ void CMapDoc::OnMapUnloadskyView(void)
 	else
 	{
 		m_bShowSkyMain = false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CMapDoc::OnPressedLGViewResset(void)
+{
+	if ( m_bResetLGView == true )
+	{
+		Msg("Logical View already has been resseted!!!\n");
+	}
+	else
+	{
+		m_bResetLGView = true;
+		Msg("Resseting logical view...\n");
+		Msg("For complete resseting logical view, please RESTART THAT MAP!!!\n");
 	}
 }
 

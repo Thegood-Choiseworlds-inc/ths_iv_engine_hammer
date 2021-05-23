@@ -394,6 +394,7 @@ void CMapInstance::CalcBounds(BOOL bFullUpdate)
 
 #if 0
 		m_pInstancedMap->GetMapWorld()->GetCullBox( vecMins, vecMaxs );
+		m_pInstancedMap->GetMapWorld()->GetBoundingBox( vecMins, vecMaxs );
 		TransformAABB( Instance3x4Matrix, vecMins, vecMaxs, vecExpandedMins, vecExpandedMaxs );
 		m_CullBox.UpdateBounds( vecExpandedMins, vecExpandedMaxs );
 #endif
@@ -459,7 +460,8 @@ CMapEntity *CMapInstance::FindChildByKeyValue( const char* key, const char* valu
 			{
 				VMatrix	LocalInstanceMatrix, Result;
 
-				LocalInstanceMatrix.SetupMatrixOrgAngles( m_Origin, m_Angles );
+				LocalInstanceMatrix.Identity();
+				AngleMatrix( m_Angles, m_Origin, LocalInstanceMatrix.As3x4() );
 				Result = ( *InstanceMatrix ) * LocalInstanceMatrix;
 				*InstanceMatrix = Result;
 			}

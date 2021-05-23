@@ -744,9 +744,14 @@ ChunkFileResult_t CMapEntity::LoadHiddenCallback(CChunkFile *pFile, CMapEntity *
 
 ChunkFileResult_t CMapEntity::LoadEditorKeyCallback( const char *szKey, const char *szValue, CMapEntity *pMapEntity )
 {
-	if ( !stricmp( szKey, "logicalpos" ) )
+	if ( !stricmp( szKey, "logicalpos" ) || m_bResetLGView == true )
 	{
 		CChunkFile::ReadKeyValueVector2(szValue, pMapEntity->m_vecLogicalPosition );
+		if( m_bResetLGView == true )
+		{
+			m_bResetLGView = false;
+			Msg("Resseting logical View Done!!!\n");
+		}
 		return ChunkFile_Ok;
 	}
 

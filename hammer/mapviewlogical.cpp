@@ -96,9 +96,13 @@ void CMapViewLogical::OnInitialUpdate(void)
 {
 	CreateTitleWindow();
 	GetTitleWnd()->SetTitle("Logical");
+	SetZoom(0);  // Zoom out as far as possible.
 	UpdateClientView();
 	CMapView2DBase::OnInitialUpdate();
 	Msg( "[IV] Logical View has Initialized successfull!!!" );
+	// FIXME: Hardcoded light gray background - should be from a new "Logical View" options settings dialog
+	m_ClearColor.SetColor( BACKGROUND, BACKGROUND, BACKGROUND, 255 );  
+	m_clrGrid.SetColor( MID, MID, MID, 255 );
 }
 
 

@@ -1197,6 +1197,7 @@
 #define ID_MAP_UNLOADPOINTFILE          33022
 #define ID_MAP_LOADSKYVIEW          33031
 #define ID_MAP_UNLOADSKYVIEW          33033
+#define ID_MAP_RESET_LG_VIEW          33037
 #define ID_PATHEDIT_SELECTPATH          33023
 #define ID_PATHEDIT_HIDEPATH            33024
 #define ID_FILE_EXPORTAGAIN             33025
