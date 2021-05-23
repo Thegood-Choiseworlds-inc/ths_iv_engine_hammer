@@ -747,11 +747,11 @@ ChunkFileResult_t CMapEntity::LoadEditorKeyCallback( const char *szKey, const ch
 	if ( !stricmp( szKey, "logicalpos" ) || m_bResetLGView == true )
 	{
 		CChunkFile::ReadKeyValueVector2(szValue, pMapEntity->m_vecLogicalPosition );
-		if( m_bResetLGView == true )
+/*		if( m_bResetLGView == true )
 		{
 			m_bResetLGView = false;
 			Msg("Resseting logical View Done!!!\n");
-		}
+		}*/
 		return ChunkFile_Ok;
 	}
 
@@ -1170,6 +1170,12 @@ void CMapEntity::PostloadWorld(CMapWorld *pWorld)
 	// Call in all our children (some of which were created above).
 	//
 	CMapClass::PostloadWorld(pWorld);
+
+	if( m_bResetLGView == true )
+	{
+		m_bResetLGView = false;
+		Msg("Resseting logical View Done!!!\n");
+	}
 
 	CalculateTypeFlags();
 }
